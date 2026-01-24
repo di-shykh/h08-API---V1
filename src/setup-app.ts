@@ -7,9 +7,11 @@ import {HttpStatus} from "./core/types/http-statuses";
 import {usersRouter} from "./users/routes/user.router";
 import {authRouter} from "./auth/routes/auth.router";
 import {commentsRouter} from "./comments/routes/comments.router";
+import cookieParser from "cookie-parser";
 
 export const setupApp = (app: Express) => {
     app.use(express.json());
+    app.use(cookieParser());
 
     app.get('/', (req, res) => {
         res.status(HttpStatus.Ok).send('hello world!');
@@ -21,6 +23,7 @@ export const setupApp = (app: Express) => {
     app.use(AUTH_PATH, authRouter);
     app.use(USERS_PATH, usersRouter);
     app.use(COMMENTS_PATH, commentsRouter);
+
 
     console.log('✅ Routers initialized:'); // 🔥
     console.log('- Blogs:', BLOGS_PATH);

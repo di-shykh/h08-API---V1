@@ -4,6 +4,7 @@ import { Post } from '../posts/domain/post';
 import { SETTINGS } from '../core/settings/settings';
 import {UserDB} from "../users/routes/output/user.db";
 import {CommentDB} from "../comments/routes/output/commnent.db";
+import {TokenBlacklistDb} from "../auth/routes/types/token-blacklist.db";
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
@@ -15,6 +16,7 @@ export let blogCollection: Collection<Blog>;
 export let postCollection: Collection<Post>;
 export let userCollection: Collection<UserDB>;
 export let commentCollection: Collection<CommentDB>;
+export let tokenListCollection: Collection<TokenBlacklistDb>;
 
 // Подключения к бд
 export async function runDB(url: string): Promise<void> {
@@ -26,6 +28,7 @@ export async function runDB(url: string): Promise<void> {
     postCollection = db.collection<Post>(POST_COLLECTION_NAME);
     userCollection = db.collection<UserDB>(USERS_COLLECTION_NAME)
     commentCollection = db.collection<CommentDB>(COMMENTS_COLLECTION_NAME);
+
 
     try {
         await client.connect();

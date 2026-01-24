@@ -12,13 +12,13 @@ import {Result, ResultObject} from "../../core/result/result.type";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 
 export const authService = {
-    async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string}|null> {
+    async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}|null> {
         const user: WithId<UserDB>|null = await usersQueryRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await bcryptService.checkPassword(password, user.passwordHash);
         if (!result) return null;
-        const accessToken= await jwtService.createToken(user._id.toString());
-        return {accessToken};
+        const {accessToken, refreshToken} = await jwtService.createToken(user._id.toString());
+        return {accessToken, refreshToken};
     },
     async createUser(userInputDto: UserCreateInput): Promise<Result<string|null>> {
 

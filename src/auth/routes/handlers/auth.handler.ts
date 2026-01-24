@@ -10,5 +10,16 @@ export async function authHandler(req: Request <{}, {}, LoginInputDto>, res: Res
     if(!tokenResult) {
         return res.sendStatus(HttpStatus.Unauthorized);
     }
-    return res.status(HttpStatus.Ok).send(tokenResult);
+
+    res.cookie('refreshToken', tokenResult.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // (HTTPS)
+        sameSite: 'strict', // или 'lax' / 'none'
+        maxAge: 60 * 60 * 1000, // 1 час в миллисекундах
+        path: '/', // доступен для всех путей
+    });
+
+    return res.status(HttpStatus.Ok).json({
+        accessToken: tokenResult.accessToken
+    });
 }

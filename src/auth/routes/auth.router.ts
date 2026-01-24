@@ -15,6 +15,7 @@ import {codeConfirmationValidation} from "../middlewares/validation/registration
 import {registrationEmailResendingHandler} from "./handlers/registration-email-resending.handler";
 import {globalLimiter} from "../middlewares/rate-limiting.middleware";
 import rateLimit from "express-rate-limit";
+import {refreshTokenHandler} from "./handlers/refresh-token.handler";
 
 // Проверяем, работаем ли в тестовом окружении
 const isTest = process.env.NODE_ENV === 'test';
@@ -33,6 +34,10 @@ export const authRouter: Router = Router({});
 // Глобальный лимитер только для не-тестов
 if (!isTest) {
     authRouter.use(globalLimiter);
+}
+
+function RefereshTokenGuard() {
+
 }
 
 authRouter
@@ -85,4 +90,9 @@ authRouter
         emailValidation,
         inputValidationResultMiddleware,
         registrationEmailResendingHandler
+    )
+    .post(
+        "/refresh-token",
+        RefereshTokenGuard,
+        refreshTokenHandler
     )
