@@ -2,5 +2,6 @@ export type TokenBlacklistDb = {
     //sessionId: string;
     userId: string;
     refreshTokenHash: string;
-    expiresAt: string;
+    expiresAt: Date;
+    createdAt: Date;
 }

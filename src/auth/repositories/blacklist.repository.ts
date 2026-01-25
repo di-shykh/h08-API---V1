@@ -7,5 +7,8 @@ export const blacklistRepository = {
         const insertResult = await tokenListCollection.insertOne(oldToken);
         return insertResult.insertedId.toString();
     },
-    async deleteToken(token: TokenBlacklistDb): Promise<string> {}
+    async deleteToken(token: TokenBlacklistDb): Promise<void> {},
+    async findToken(token: TokenBlacklistDb): Promise<boolean> {
+
+    }
 }
