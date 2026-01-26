@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {authService} from "../../application/auth.service";
-import cookieParser from "cookie-parser";
 import {jwtService} from "../../application/jwt.service";
 import {errorHandler} from "../../../core/errors/error.handler";
 
@@ -12,8 +11,19 @@ export async function refreshTokenHandler (req: Request, res: Response) {
         if (!decodedPayload|| !decodedPayload.userId) {
             return res.sendStatus(HttpStatus.Unauthorized);
         }
-        const {accessToken, refreshToken} = await jwtService.createToken(decodedPayload.userId);
-        await authService.addTokenToBlackList(oldRefreshToken, decodedPayload.userId);
+        const tokenResult = await jwtService.createToken(decodedPayload.userId);
+        await authService.addTokenToBlackList(oldRefreshToken);
+        res.cookie('refreshToken', tokenResult.refreshToken, {
+            httpOnly: true,
+            secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
+            sameSite: 'strict', // или 'lax' / 'none'
+            maxAge: 60 * 60 * 1000, // 1 час в миллисекундах
+            path: '/', // доступен для всех путей
+        });
+
+        return res.status(HttpStatus.Ok).json({
+            accessToken: tokenResult.accessToken
+        });
     } catch(e: unknown) {
             errorHandler(e, res);
         }

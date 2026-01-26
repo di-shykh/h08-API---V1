@@ -5,6 +5,7 @@ import { SETTINGS } from '../core/settings/settings';
 import {UserDB} from "../users/routes/output/user.db";
 import {CommentDB} from "../comments/routes/output/commnent.db";
 import {TokenBlacklistDB} from "../auth/routes/types/token-blacklist.db";
+import {createTTLIndex} from "./ttl.indexes.blacklist";
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
@@ -37,7 +38,7 @@ export async function runDB(url: string): Promise<void> {
         await db.command({ ping: 1 });
         console.log('✅ Connected to the database');
         // Создаем индексы
-        await createTTLIndex();
+        await createTTLIndex(tokenListCollection);
     } catch (e) {
         await client.close();
         throw new Error(`❌ Database not connected: ${e}`);
@@ -49,32 +50,4 @@ export async function stopDb() {
         throw new Error(`❌ No active client`);
     }
     await client.close();
-}
-//ttl indexes for blacklist
-async function createTTLIndex(): Promise<void> {
-    try {
-        if (!tokenListCollection) throw new Error('Collection not initialized');
-
-        const indexes = await tokenListCollection.indexes();
-        const ttlIndexExists = indexes.some(
-            index => index.name === 'expiresAt_ttl_index'
-        );
-
-        if (!ttlIndexExists) {
-            await tokenListCollection.createIndex(
-                { expiresAt: 1 },
-                {
-                    expireAfterSeconds: 0,
-                    name: 'expiresAt_ttl_index',
-                    background: true
-                }
-            );
-            console.log('TTL index created');
-        } else {
-            console.log('TTL index already exists');
-        }
-    } catch (error) {
-        console.error('Failed to create TTL index:', error);
-        throw error;
-    }
 }

@@ -11,5 +11,5 @@ export const blacklistRepository = {
     async isTokenBlacklisted(tokenHash: string): Promise<boolean> {
         const existing = await tokenListCollection.findOne({refreshTokenHash: tokenHash});
         return existing !== null;
-    }
+    },
 }

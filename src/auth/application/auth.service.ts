@@ -12,6 +12,8 @@ import {Result, ResultObject} from "../../core/result/result.type";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import {blacklistRepository} from "../repositories/blacklist.repository";
 import {TokenBlacklistDB} from "../routes/types/token-blacklist.db";
+import crypto from 'crypto';
+import jwt from "jsonwebtoken";
 
 export const authService = {
     async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}|null> {
@@ -100,30 +102,54 @@ export const authService = {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
     },
-    async addTokenToBlackList(token: string, userId: string): Promise<Result>{
+    async addTokenToBlackList(token: string): Promise<Result<string | {message: string} | null>>{
         try{
             const decoded = await jwtService.verifyTokenFull(token);
             if(!decoded){
                 return ResultObject.BadRequest('token', 'Invalid token')
             }
+            if (decoded.type !== 'refresh') {
+                return ResultObject.BadRequest('token', 'Only refresh tokens can be blacklisted');
+            }
             const  expiresAt = new Date(decoded.exp! * 1000);
             const createdAt = new Date(decoded.iat! * 1000);
-            const tokenHash: string = await bcryptService.generateHash(token);
+            const tokenHash = crypto.createHash('sha256')
+                .update(token + process.env.HASH_SALT) // добавляем соль
+                .digest('hex');
+            const existing = await blacklistRepository.isTokenBlacklisted(tokenHash);
+            if (existing) {
+                return ResultObject.Success('Token already blacklisted');
+            }
+            //
             const oldToken: TokenBlacklistDB = {
-                userId,
+                userId: decoded.userId,
                 refreshTokenHash: tokenHash,
                 expiresAt,
                 createdAt
             }
             const insertedTokenId: string = await blacklistRepository.insertToken(oldToken);
-// повесить ttl индекс на таблицу!!! вернуть что-то в объектрезалт
             if(!insertedTokenId){
                 return ResultObject.InternalServerError('Token wasn\'t added to Blacklist' );
             }
-
-
+        return ResultObject.Success('Expired token blacklisted');
         } catch (e) {
-            return ResultObject.BadRequest('token', 'Invalid token')
+            console.error('Blacklist error:', e);
+
+            // Обработка специфических ошибок
+            if (e instanceof jwt.TokenExpiredError) {
+                // Можно добавить истёкший токен
+                const hash = crypto.createHash('sha256')
+                    .update(token + process.env.HASH_SALT) // добавляем соль
+                    .digest('hex');
+                await blacklistRepository.insertToken({
+                    refreshTokenHash: hash,
+                    userId: 'unknown', // или из decode
+                    expiresAt: new Date(),
+                    createdAt: new Date()
+                });
+                return ResultObject.Success('Expired token blacklisted');
+            }
+            return ResultObject.InternalServerError('Failed to blacklist token');
         }
     }
 }
