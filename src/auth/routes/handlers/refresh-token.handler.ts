@@ -7,6 +7,12 @@ import {errorHandler} from "../../../core/errors/error.handler";
 export async function refreshTokenHandler (req: Request, res: Response) {
     try {
         const oldRefreshToken = req.cookies.refresh_token;
+
+        if (!oldRefreshToken) {
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'No refresh token' }]
+            });
+        }
         const decodedPayload = await jwtService.verifyToken(oldRefreshToken);
         if (!decodedPayload|| !decodedPayload.userId) {
             return res.sendStatus(HttpStatus.Unauthorized);
@@ -26,5 +32,5 @@ export async function refreshTokenHandler (req: Request, res: Response) {
         });
     } catch(e: unknown) {
             errorHandler(e, res);
-        }
+    }
 }

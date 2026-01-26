@@ -25,19 +25,18 @@ export async function runDB(url: string): Promise<void> {
     client = new MongoClient(url);
     const db: Db = client.db(SETTINGS.DB_NAME);
 
-    // Инициализация коллекций
-    blogCollection = db.collection<Blog>(BLOG_COLLECTION_NAME);
-    postCollection = db.collection<Post>(POST_COLLECTION_NAME);
-    userCollection = db.collection<UserDB>(USERS_COLLECTION_NAME)
-    commentCollection = db.collection<CommentDB>(COMMENTS_COLLECTION_NAME);
-    tokenListCollection = db.collection<TokenBlacklistDB>(BLACKLIST_COLLECTION_NAME);
-
-
     try {
+        // Инициализация коллекций
+        blogCollection = db.collection<Blog>(BLOG_COLLECTION_NAME);
+        postCollection = db.collection<Post>(POST_COLLECTION_NAME);
+        userCollection = db.collection<UserDB>(USERS_COLLECTION_NAME)
+        commentCollection = db.collection<CommentDB>(COMMENTS_COLLECTION_NAME);
+        tokenListCollection = db.collection<TokenBlacklistDB>(BLACKLIST_COLLECTION_NAME);
         await client.connect();
         await db.command({ ping: 1 });
         console.log('✅ Connected to the database');
         // Создаем индексы
+        await createCollectionsIfNotExist(db);
         await createTTLIndex(tokenListCollection);
     } catch (e) {
         await client.close();
@@ -50,4 +49,25 @@ export async function stopDb() {
         throw new Error(`❌ No active client`);
     }
     await client.close();
+}
+
+async function createCollectionsIfNotExist(db: Db): Promise<void> {
+    const collections = await db.listCollections().toArray();
+    const existingCollections = new Set(collections.map(c => c.name));
+
+    // Создаём только те коллекции, которых нет
+    const collectionsToCreate = [
+        { name: BLOG_COLLECTION_NAME, options: {} },
+        { name: POST_COLLECTION_NAME, options: {} },
+        { name: USERS_COLLECTION_NAME, options: {} },
+        { name: COMMENTS_COLLECTION_NAME, options: {} },
+        { name: BLACKLIST_COLLECTION_NAME, options: {} }
+    ];
+
+    for (const { name, options } of collectionsToCreate) {
+        if (!existingCollections.has(name)) {
+            await db.createCollection(name, options);
+            console.log(`✅ Created collection: ${name}`);
+        }
+    }
 }

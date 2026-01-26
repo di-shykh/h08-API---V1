@@ -17,6 +17,7 @@ import {globalLimiter} from "../middlewares/rate-limiting.middleware";
 import rateLimit from "express-rate-limit";
 import {refreshTokenHandler} from "./handlers/refresh-token.handler";
 import {RefereshTokenGuard} from "../middlewares/refresh.token.guard"
+import {logoutHandler} from "./handlers/logout.handler";
 
 // Проверяем, работаем ли в тестовом окружении
 const isTest = process.env.NODE_ENV === 'test';
@@ -92,4 +93,9 @@ authRouter
         "/refresh-token",
         RefereshTokenGuard,
         refreshTokenHandler
+    )
+    .post(
+        "/logout",
+        RefereshTokenGuard,
+        logoutHandler
     )
