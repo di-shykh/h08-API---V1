@@ -3,6 +3,7 @@ import {HttpStatus} from "../../core/types/http-statuses";
 import {jwtService} from "../application/jwt.service";
 import {errorHandler} from "../../core/errors/error.handler";
 import {bcryptService} from "../adapters/bcrypt.service";
+import {blacklistRepository} from "../repositories/blacklist.repository";
 
 export const RefereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
@@ -17,11 +18,16 @@ export const RefereshTokenGuard = async (req: Request, res: Response, next: Next
                { errorsMessages: [{token: 'Invalid refresh token'}]
                })
        }
-       // const passwordHash: string = await bcryptService.generateHash(password);
-       const tokenHash = await bcryptService.generateHash(password);
-       const result = await
-
-   } catch (e) {
+       const tokenHash = await bcryptService.generateHash(refreshToken);
+       const resultFromBlackList = await blacklistRepository.isTokenBlacklisted(tokenHash);
+       if(resultFromBlackList) {
+           return res.status(HttpStatus.Unauthorized).json(
+               { errorsMessages: [{token: 'Refresh token expired'}]
+               })
+       }
+       next();
+       return;
+   } catch (e: unknown) {
        errorHandler(e,res);
    }
 }

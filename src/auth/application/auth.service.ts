@@ -10,6 +10,8 @@ import {UserCreateInput} from "../../users/routes/input/create-user.input";
 import {emailAdapter} from "../adapters/email.adapter";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
+import {blacklistRepository} from "../repositories/blacklist.repository";
+import {TokenBlacklistDB} from "../routes/types/token-blacklist.db";
 
 export const authService = {
     async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}|null> {
@@ -26,19 +28,17 @@ export const authService = {
         const normalizedEmail = normalizeEmail(email);
         const isLoginUnique = await usersQueryRepository.isLoginUnique(login);
         if (!isLoginUnique) {
-           // throw new DuplicateFieldError("login");
           return   ResultObject.BadRequest('login', 'Login already exists');
         }
-        //const isEmailUnique = await usersQueryRepository.isEmailUnique(email);
+
         const isEmailUnique = await usersQueryRepository.isEmailUnique(normalizedEmail);
         if (!isEmailUnique) {
-            //throw new DuplicateFieldError("email");
            return  ResultObject.BadRequest('email', 'Email already exists');
         }
         const passwordHash: string = await bcryptService.generateHash(password);
         const confirmationCode: string = uuidv4();
         const expirationDate: string = addHours(new Date(), 24).toISOString();
-        //const normalizedEmail = email.toLowerCase().trim();
+
         const newUser: UserDB = {
             login,
             email: normalizedEmail,
@@ -98,6 +98,32 @@ export const authService = {
             return ResultObject.Success(result);
         } catch (e) {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
+        }
+    },
+    async addTokenToBlackList(token: string, userId: string): Promise<Result>{
+        try{
+            const decoded = await jwtService.verifyTokenFull(token);
+            if(!decoded){
+                return ResultObject.BadRequest('token', 'Invalid token')
+            }
+            const  expiresAt = new Date(decoded.exp! * 1000);
+            const createdAt = new Date(decoded.iat! * 1000);
+            const tokenHash: string = await bcryptService.generateHash(token);
+            const oldToken: TokenBlacklistDB = {
+                userId,
+                refreshTokenHash: tokenHash,
+                expiresAt,
+                createdAt
+            }
+            const insertedTokenId: string = await blacklistRepository.insertToken(oldToken);
+// повесить ttl индекс на таблицу!!! вернуть что-то в объектрезалт
+            if(!insertedTokenId){
+                return ResultObject.InternalServerError('Token wasn\'t added to Blacklist' );
+            }
+
+
+        } catch (e) {
+            return ResultObject.BadRequest('token', 'Invalid token')
         }
     }
 }

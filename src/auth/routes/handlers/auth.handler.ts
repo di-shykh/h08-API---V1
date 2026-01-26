@@ -13,7 +13,7 @@ export async function authHandler(req: Request <{}, {}, LoginInputDto>, res: Res
 
     res.cookie('refreshToken', tokenResult.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // (HTTPS)
+        secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
         sameSite: 'strict', // или 'lax' / 'none'
         maxAge: 60 * 60 * 1000, // 1 час в миллисекундах
         path: '/', // доступен для всех путей

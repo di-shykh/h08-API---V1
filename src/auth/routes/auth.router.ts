@@ -37,7 +37,6 @@ if (!isTest) {
     authRouter.use(globalLimiter);
 }
 
-let RefereshTokenGuard;
 authRouter
     .post(
     "/login",

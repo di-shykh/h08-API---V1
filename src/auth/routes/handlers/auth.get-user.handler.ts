@@ -17,7 +17,7 @@ export async function authGetHandler(req: Request, res: Response) {
         const {createdAt, ...userWithoutCreatedAt} = userOutput;
         return res.status(HttpStatus.Ok).json(userWithoutCreatedAt);
 
-    } catch (e) {
+    } catch (e: unknown) {
         errorHandler(e,res);
     }
 }

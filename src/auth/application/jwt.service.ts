@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, {JwtPayload} from 'jsonwebtoken';
 
 export const jwtService ={
     async   createToken (userId: string): Promise<{
@@ -26,6 +26,14 @@ export const jwtService ={
             return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
         } catch (e) {
             console.error("Can't verify token",e);
+            return null;
+        }
+    },
+    async verifyTokenFull(token: string): Promise<JwtPayload & { userId: string } | null> {
+        try {
+            return jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+        } catch (e) {
+            console.error("Can't verify token", e);
             return null;
         }
     }

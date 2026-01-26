@@ -1,4 +1,4 @@
-export type TokenBlacklistDb = {
+export type TokenBlacklistDB = {
     //sessionId: string;
     userId: string;
     refreshTokenHash: string;
