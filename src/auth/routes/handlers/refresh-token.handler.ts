@@ -17,8 +17,10 @@ export async function refreshTokenHandler (req: Request, res: Response) {
         if (!decodedPayload|| !decodedPayload.userId) {
             return res.sendStatus(HttpStatus.Unauthorized);
         }
-        const tokenResult = await jwtService.createToken(decodedPayload.userId);
         await authService.addTokenToBlackList(oldRefreshToken);
+
+        const tokenResult = await jwtService.createToken(decodedPayload.userId);
+
         res.cookie('refreshToken', tokenResult.refreshToken, {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === 'production', (HTTPS)

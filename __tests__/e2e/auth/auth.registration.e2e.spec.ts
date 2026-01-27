@@ -17,7 +17,7 @@ import {beforeEach} from "node:test";
 import {v4 as uuidv4} from "uuid";
 
 process.env.NODE_ENV = 'test';
-describe("Check Auth: POST /auth/login", () => {
+describe("Check Auth: POST /auth/registration and POST /auth/registration-confirmation", () => {
     const app: Express = express();
     setupApp(app);
     const adminToken: string = generateBasicAuthToken();
