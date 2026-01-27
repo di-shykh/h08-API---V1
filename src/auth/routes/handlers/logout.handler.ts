@@ -7,7 +7,7 @@ import {ResultStatus} from "../../../core/result/result.code";
 
 export async function logoutHandler(req: Request, res: Response) {
     try {
-        const oldRefreshToken = req.cookies.refresh_token;
+        const oldRefreshToken = req.cookies.refreshToken;
         if (!oldRefreshToken) {
             return res.status(HttpStatus.Unauthorized).json({
                 errorsMessages: [{ message: 'No refresh token' }]
@@ -20,12 +20,12 @@ export async function logoutHandler(req: Request, res: Response) {
         const result = await authService.addTokenToBlackList(oldRefreshToken);
         clearRefreshTokenCookie(res);
         if (result.status === ResultStatus.Success) {
-            return res.status(HttpStatus.Ok).json({
+            return res.status(HttpStatus.NoContent).json({
                 message: 'Successfully logged out'
             });
         } else {
             // Токен добавлен в чёрный список, но была какая-то проблема
-            return res.status(HttpStatus.Ok).json({
+            return res.status(HttpStatus.NoContent).json({
                 message: 'Logged out (token may be expired)'
             });
         }
@@ -34,7 +34,7 @@ export async function logoutHandler(req: Request, res: Response) {
     }
 }
 function clearRefreshTokenCookie(res: Response): void {
-    res.clearCookie('refresh_token', {
+    res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',

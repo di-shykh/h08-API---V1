@@ -14,8 +14,12 @@ export async function authGetHandler(req: Request, res: Response) {
         const userId: string = req.userId;
         const user: WithId<User> = await usersQueryRepository.findUserByIdOrFail(userId);
         const userOutput: UserOutput = await usersQueryRepository.mapToUserOutput(user);
-        const {createdAt, ...userWithoutCreatedAt} = userOutput;
-        return res.status(HttpStatus.Ok).json(userWithoutCreatedAt);
+        const {id,createdAt, ...userWithoutCreatedAt} = userOutput;
+        const responseData = {
+            ...userWithoutCreatedAt,
+            userId: id,
+        }
+        return res.status(HttpStatus.Ok).json(responseData);
 
     } catch (e: unknown) {
         errorHandler(e,res);

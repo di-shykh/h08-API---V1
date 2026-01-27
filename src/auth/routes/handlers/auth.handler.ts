@@ -15,8 +15,8 @@ export async function authHandler(req: Request <{}, {}, LoginInputDto>, res: Res
         httpOnly: true,
         secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
         sameSite: 'strict', // или 'lax' / 'none'
-        maxAge: 60 * 60 * 1000, // 1 час в миллисекундах
-        path: '/', // доступен для всех путей
+        maxAge: 20 * 1000, // 1 час в миллисекундах
+        path: '/auth/refresh-token', // доступен для всех путей
     });
 
     return res.status(HttpStatus.Ok).json({

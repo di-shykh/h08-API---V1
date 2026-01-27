@@ -7,7 +7,7 @@ import crypto from "crypto";
 
 export const RefereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
-       const refreshToken = req.cookies.refresh_token;
+       const refreshToken = req.cookies.refreshToken;
        if (!refreshToken) {
            return res.status(HttpStatus.Unauthorized).json(
                { errorsMessages: [{token: 'No refresh token'}] });

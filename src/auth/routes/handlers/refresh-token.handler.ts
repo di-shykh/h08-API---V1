@@ -6,7 +6,7 @@ import {errorHandler} from "../../../core/errors/error.handler";
 
 export async function refreshTokenHandler (req: Request, res: Response) {
     try {
-        const oldRefreshToken = req.cookies.refresh_token;
+        const oldRefreshToken = req.cookies.refreshToken;
 
         if (!oldRefreshToken) {
             return res.status(HttpStatus.Unauthorized).json({
@@ -23,8 +23,8 @@ export async function refreshTokenHandler (req: Request, res: Response) {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
             sameSite: 'strict', // или 'lax' / 'none'
-            maxAge: 60 * 60 * 1000, // 1 час в миллисекундах
-            path: '/', // доступен для всех путей
+            maxAge: 20 * 1000, // х
+            path: '/auth/refresh-token', // доступен для всех путей
         });
 
         return res.status(HttpStatus.Ok).json({
