@@ -130,12 +130,14 @@ describe("Comments API", () => {
         expect(result.body.content).toBe('test content for e2e tests');
     })
     it('should not update comment with invalid token, PUT /hometask_06/api/comments/{commentId}', async () => {
+
+        //этот тест падает
         const token = await loginGetToken(app);
         const createdPost = await createPost(app);
         const comment = await createComment(app, token, createdPost.id, {content: "test content for e2e tests"});
-        console.log(comment);
-        console.log('token:'+token);
-
+        // console.log(comment);
+        // console.log('token:'+token);
+console.log("created comment in comment it", comment);
         const anotherToken = await loginGetToken(app, {login: 'AnotherUser23', password: 'anotherPassword23', email: 'anotherEmail@gmail.com'});
         console.log('anotherToken:'+anotherToken);
         await request(app)
@@ -196,6 +198,7 @@ describe("Comments API", () => {
             .expect(HttpStatus.Ok);
     })
     it('should not delete comment with another token, DELETE /hometask_06/api/comments/{commentId}', async () => {
+        //этот тест падает
         const token = await loginGetToken(app);
         const createdPost = await createPost(app);
         const comment = await createComment(app, token, createdPost.id, {content: "test content for e2e tests"});

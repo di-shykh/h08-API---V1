@@ -10,19 +10,14 @@ import {UserInputDto} from "../../src/users/application/dtos/user.input-dto";
 export const loginGetToken = async (app: Express, userDto?: UserInputDto) => {
 
     const timestamp = Date.now().toString().slice(0,4);
-    // const userData = {
-    //     login: userDto?.login ?? `TestUser_${timestamp}`,
-    //     password: userDto?.password ?? 'password123',
-    //     email: userDto?.email ?? `test_${timestamp}@example.com`
-    // };
     const userData = {
-        login: userDto?.login ?? `TestUser`,
+        login: userDto?.login ?? `TestUser1`,
         password: userDto?.password ?? 'password123',
-        email: userDto?.email ?? `test@example.com`
+        email: userDto?.email ?? `test1@example.com`
     };
-    // console.log('Creating user with:', userData);
+
     const user= await createUser(app, userData);
-    // console.log('User created successfully, user id:',user.id );
+
     // Пробуем авторизоваться - сначала с логином, потом с email
     let response = await request(app)
         .post(`${AUTH_PATH}/login`)

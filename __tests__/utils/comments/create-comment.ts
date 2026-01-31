@@ -8,11 +8,12 @@ import {CommentInputDto} from "../../../src/comments/application/dtos/comment.in
 import {Express} from "express";
 
 export async function createComment(app: Express,token: string, postId: string, commentDto: CommentInputDto) {
-
+    console.log("creating new comment...");
     const response = await request(app)
         .post(`${POSTS_PATH}/${postId}/comments`)
         .set('Authorization', `Bearer ${token}`)
         .send(commentDto)
         .expect(HttpStatus.Created);
+    console.log(`created ${response.body} new comment...`);
     return response.body
 }
