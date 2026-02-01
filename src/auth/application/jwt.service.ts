@@ -1,7 +1,8 @@
 import jwt, {JwtPayload} from 'jsonwebtoken';
+import {Session} from "../../securityDevices/domain/session";
 
 export const jwtService ={
-    async   createToken (userId: string): Promise<{
+    async   createToken (userId: string, deviceId:string): Promise<{
         accessToken: string;
         refreshToken: string;
     }> {
@@ -10,7 +11,7 @@ export const jwtService ={
             throw new Error('JWT_SECRET is not defined in environment variables');
         }
         const accessToken: string = jwt.sign({ userId, type: 'access', iat: Date.now()  }, secret, { expiresIn: '10s' });
-        const refreshToken: string = jwt.sign({ userId, type: 'refresh', iat: Date.now()  }, secret, { expiresIn: '20s' });
+        const refreshToken: string = jwt.sign({ userId, deviceId, type: 'refresh', iat: Date.now()  }, secret, { expiresIn: '20s' });
         return { accessToken, refreshToken };
     },
     async decodeToken(token: string): Promise<any> {

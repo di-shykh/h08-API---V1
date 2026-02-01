@@ -2,11 +2,15 @@ import {LoginInputDto} from "../../application/dtos/loginInputDto";
 import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {authService} from "../../application/auth.service";
+import {v4 as uuidv4} from "uuid";
 
 export async function authHandler(req: Request <{}, {}, LoginInputDto>, res: Response) {
 
     const {loginOrEmail, password} = req.body;
-    const tokenResult = await authService.loginUser(loginOrEmail, password);
+    const deviceName = req.headers['user-agent'] ?? 'Unknown';
+    const ipAddress = req.ip ?? 'unknown';
+    const tokenResult = await authService.loginUser(loginOrEmail, password, deviceName, ipAddress);
+
     if(!tokenResult) {
         return res.sendStatus(HttpStatus.Unauthorized);
     }

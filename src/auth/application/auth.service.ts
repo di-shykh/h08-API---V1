@@ -14,14 +14,37 @@ import {blacklistRepository} from "../repositories/blacklist.repository";
 import {TokenBlacklistDB} from "../routes/types/token-blacklist.db";
 import crypto from 'crypto';
 import jwt from "jsonwebtoken";
+import {Session} from "../../securityDevices/domain/session";
+import {sessionRepository} from "../../securityDevices/repositories/session.repository";
 
 export const authService = {
-    async loginUser(loginOrEmail: string, password: string): Promise<{accessToken: string, refreshToken: string}|null> {
+    async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
         const user: WithId<UserDB>|null = await usersQueryRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await bcryptService.checkPassword(password, user.passwordHash);
         if (!result) return null;
-        const {accessToken, refreshToken} = await jwtService.createToken(user._id.toString());
+        const deviceId: string = uuidv4();
+        const userId = user._id.toString();
+
+        const {accessToken, refreshToken} = await jwtService.createToken(user._id.toString(), deviceId);
+        const payload = jwtService.verifyTokenFull(refreshToken);
+        if (!payload){
+            return null;
+        }
+        if (!(payload as any).iat) {
+            return null;
+        }
+        const iat = (payload as any).iat || Math.floor(Date.now() / 1000);
+        const session: Session = {
+            userId,
+            deviceId,
+            deviceName,
+            ipAddress,
+            iat: new Date(iat*1000),
+            exp: new Date(Date.now()+20000),
+        };
+        const sessionId = await sessionRepository.createSession(session);
+        if (!sessionId) return null;
         return {accessToken, refreshToken};
     },
     async createUser(userInputDto: UserCreateInput): Promise<Result<string|null>> {
