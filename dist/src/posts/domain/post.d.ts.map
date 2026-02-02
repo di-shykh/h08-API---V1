@@ -1,0 +1,1 @@
+{"version":3,"file":"post.d.ts","sourceRoot":"","sources":["../../../../src/posts/domain/post.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,IAAI,GAAG;IACf,KAAK,EAAE,MAAM,CAAC;IACd,gBAAgB,EAAE,MAAM,CAAC;IACzB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,QAAQ,EAAE,MAAM,CAAC;IAEjB,SAAS,EAAE,MAAM,CAAC;CACrB,CAAA"}

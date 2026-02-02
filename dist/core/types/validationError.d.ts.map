@@ -1,0 +1,1 @@
+{"version":3,"file":"validationError.d.ts","sourceRoot":"","sources":["../../../src/core/types/validationError.ts"],"names":[],"mappings":"AAIA,OAAO,EAAC,UAAU,EAAC,MAAM,iBAAiB,CAAC;AAE3C,MAAM,MAAM,mBAAmB,GAAG;IAC9B,MAAM,EAAE,UAAU,CAAC;IACnB,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,CAAC,EAAE,MAAM,GAAG,SAAS,CAAC;IAC5B,IAAI,CAAC,EAAE,MAAM,GAAG,SAAS,CAAC;CAC7B,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"post-view-model.d.ts","sourceRoot":"","sources":["../../../src/posts/types/post-view-model.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,aAAa,GAAG;IACxB,EAAE,EAAE,MAAM,CAAC;IACX,KAAK,EAAE,MAAM,CAAC;IACd,gBAAgB,EAAE,MAAM,CAAC;IACzB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,MAAM,CAAC;IACf,QAAQ,EAAE,MAAM,CAAC;IAEjB,SAAS,EAAE,MAAM,CAAC;CACrB,CAAA"}
