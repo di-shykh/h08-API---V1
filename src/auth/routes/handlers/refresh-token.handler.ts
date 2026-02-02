@@ -17,22 +17,36 @@ export async function refreshTokenHandler (req: Request, res: Response) {
         }
         const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
         if (!decodedPayload|| !decodedPayload.userId) {
-            return res.sendStatus(HttpStatus.Unauthorized);
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'Refresh token is not valid' }]
+            });
         }
         const iat= decodedPayload.iat;
         const deviceId = decodedPayload.deviceId;
         if(!deviceId||!iat){
-            return res.sendStatus(HttpStatus.Unauthorized);
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'Refresh token is not valid' }]
+            });
         }
         const session = await sessionQueryRepository.getSession(deviceId, decodedPayload.userId);
         if (!session) {
-            return res.sendStatus(HttpStatus.Unauthorized);
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'Refresh token is not valid' }]
+            });
         }
         const tokenResult = await securityService.refreshToken(session);
         if(!tokenResult){
-            return res.sendStatus(HttpStatus.Unauthorized);
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'Refresh token is not valid' }]
+            });
         }
-        res.cookie('refreshToken', tokenResult.refreshToken, {
+        if (!tokenResult.data) {
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{ message: 'Refresh token is not valid' }]
+            });
+        }
+        const { accessToken, refreshToken } = tokenResult.data;
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
             sameSite: 'strict', // или 'lax' / 'none'
@@ -41,7 +55,7 @@ export async function refreshTokenHandler (req: Request, res: Response) {
         });
 
         return res.status(HttpStatus.Ok).json({
-            accessToken: tokenResult.accessToken
+            accessToken: accessToken
         });
     } catch(e: unknown) {
             errorHandler(e, res);

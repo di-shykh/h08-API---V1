@@ -1,12 +1,15 @@
 import {Session} from "../domain/session";
 import {jwtService} from "../../auth/application/jwt.service";
 import {sessionRepository} from "../repositories/session.repository";
-import {UpdateResult, WithId} from "mongodb";
+import {DeleteResult, UpdateResult, WithId} from "mongodb";
 import {ResultStatus} from "../../core/result/result.code";
 import {Result, ResultObject} from "../../core/result/result.type";
 
 export const securityService = {
-    async refreshToken(session: WithId<Session>): Promise<Result> {
+    async refreshToken(session: WithId<Session>): Promise<Result<{
+        accessToken: string;
+        refreshToken: string;
+    } | null>> {
        const tokenResult = await jwtService.createToken(session.userId, session.deviceId);
        const payload = await jwtService.verifyTokenFull(tokenResult.refreshToken);
        if (!payload) {
@@ -23,9 +26,13 @@ export const securityService = {
        if(result.matchedCount<1) {
            return ResultObject.Unauthorized();
        }
-       return ResultObject.Success(tokenResult);//todo и разобраться что будет в хэндлерах  jjj
+       return ResultObject.Success(tokenResult);
     },
-    async deleteSession(id: string): Promise<void> {
-        await sessionRepository.deleteSession(id);
+    async deleteSession(id: string): Promise<Result> {
+       const result: DeleteResult = await sessionRepository.deleteSession(id);
+       if (result.deletedCount<1) {
+           return ResultObject.Unauthorized();
+       }
+       return ResultObject.NoContent();
     }
 }

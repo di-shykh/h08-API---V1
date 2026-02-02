@@ -17,10 +17,10 @@ export async function authHandler(req: Request <{}, {}, LoginInputDto>, res: Res
 
     res.cookie('refreshToken', tokenResult.refreshToken, {
         httpOnly: true,
-        secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
-        sameSite: 'strict', // или 'lax' / 'none'
-        maxAge: 20 * 1000, // 1 час в миллисекундах
-        path: '/auth/refresh-token', // доступен для всех путей
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 20 * 1000,
+        path: '/auth/refresh-token',
     });
 
     return res.status(HttpStatus.Ok).json({

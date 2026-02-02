@@ -25,12 +25,11 @@ export async function logoutHandler(req: Request, res: Response) {
         }
         const result = await securityService.deleteSession(session._id.toString());
         clearRefreshTokenCookie(res);
-        if (result.status === ResultStatus.Success) {
+        if (result.status === ResultStatus.NoContent) {
             return res.status(HttpStatus.NoContent).json({
                 message: 'Successfully logged out'
             });
         } else {
-            // Токен добавлен в чёрный список, но была какая-то проблема
             return res.status(HttpStatus.NoContent).json({
                 message: 'Logged out (token may be expired)'
             });
@@ -42,7 +41,7 @@ export async function logoutHandler(req: Request, res: Response) {
 function clearRefreshTokenCookie(res: Response): void {
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         sameSite: 'strict',
         path: '/auth/refresh-token'
     });
