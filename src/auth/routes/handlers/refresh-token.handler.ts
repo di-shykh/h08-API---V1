@@ -3,24 +3,35 @@ import {HttpStatus} from "../../../core/types/http-statuses";
 import {authService} from "../../application/auth.service";
 import {jwtService} from "../../application/jwt.service";
 import {errorHandler} from "../../../core/errors/error.handler";
+import {sessionRepository} from "../../../securityDevices/repositories/session.repository";
+import {sessionQueryRepository} from "../../../securityDevices/repositories/session.query-repository";
+import {securityService} from "../../../securityDevices/application/security.services";
 
 export async function refreshTokenHandler (req: Request, res: Response) {
     try {
         const oldRefreshToken = req.cookies.refreshToken;
-
         if (!oldRefreshToken) {
             return res.status(HttpStatus.Unauthorized).json({
                 errorsMessages: [{ message: 'No refresh token' }]
             });
         }
-        const decodedPayload = await jwtService.verifyToken(oldRefreshToken);
+        const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
         if (!decodedPayload|| !decodedPayload.userId) {
             return res.sendStatus(HttpStatus.Unauthorized);
         }
-        await authService.addTokenToBlackList(oldRefreshToken);
-
-        const tokenResult = await jwtService.createToken(decodedPayload.userId);
-
+        const iat= decodedPayload.iat;
+        const deviceId = decodedPayload.deviceId;
+        if(!deviceId||!iat){
+            return res.sendStatus(HttpStatus.Unauthorized);
+        }
+        const session = await sessionQueryRepository.getSession(deviceId, decodedPayload.userId);
+        if (!session) {
+            return res.sendStatus(HttpStatus.Unauthorized);
+        }
+        const tokenResult = await securityService.refreshToken(session);
+        if(!tokenResult){
+            return res.sendStatus(HttpStatus.Unauthorized);
+        }
         res.cookie('refreshToken', tokenResult.refreshToken, {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === 'production', (HTTPS)

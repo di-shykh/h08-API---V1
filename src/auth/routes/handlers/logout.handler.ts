@@ -4,6 +4,8 @@ import {HttpStatus} from "../../../core/types/http-statuses";
 import {authService} from "../../application/auth.service";
 import {errorHandler} from "../../../core/errors/error.handler";
 import {ResultStatus} from "../../../core/result/result.code";
+import {securityService} from "../../../securityDevices/application/security.services";
+import {sessionQueryRepository} from "../../../securityDevices/repositories/session.query-repository";
 
 export async function logoutHandler(req: Request, res: Response) {
     try {
@@ -13,11 +15,15 @@ export async function logoutHandler(req: Request, res: Response) {
                 errorsMessages: [{ message: 'No refresh token' }]
             });
         }
-        const decodedPayload = await jwtService.verifyToken(oldRefreshToken);
+        const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
         if (!decodedPayload) {
             return res.sendStatus(HttpStatus.Unauthorized);
         }
-        const result = await authService.addTokenToBlackList(oldRefreshToken);
+        const session = await sessionQueryRepository.getSession(decodedPayload.deviceId,decodedPayload.userId)
+        if (!session) {
+            return res.sendStatus(HttpStatus.Unauthorized);
+        }
+        const result = await securityService.deleteSession(session._id.toString());
         clearRefreshTokenCookie(res);
         if (result.status === ResultStatus.Success) {
             return res.status(HttpStatus.NoContent).json({

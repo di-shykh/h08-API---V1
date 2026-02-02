@@ -60,6 +60,14 @@ export class ResultObject {
             extensions: [],
         }
     }
+    static Unauthorized(): Result<null> {
+        return {
+            status:ResultStatus.Unauthorized,
+            data:null,
+            errorMessage: 'Unauthorized',
+            extensions: [],
+        }
+    }
     static InternalServerError( message?: string): Result<null> {
         return {
             status: ResultStatus.InternalServerError,
