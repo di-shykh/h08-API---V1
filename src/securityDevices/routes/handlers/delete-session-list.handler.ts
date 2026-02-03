@@ -3,6 +3,9 @@ import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {jwtService} from "../../../auth/application/jwt.service";
 import {securityService} from "../../application/security.services";
+import {Result} from "../../../core/result/result.type";
+import {ResultStatus} from "../../../core/result/result.code";
+import {resultCodeToHttpException} from "../../../core/result/resultCodeToHttpExeptions";
 
 export async function deleteSessionListHandler(req: Request, res: Response) {
     try {
@@ -19,6 +22,15 @@ export async function deleteSessionListHandler(req: Request, res: Response) {
             });
         }
         const result: Result = await securityService.deleteSessionList(decodedPayload.userId, decodedPayload.deviceId);
+        if(result.status===ResultStatus.NotFound) {
+            res.status(resultCodeToHttpException(ResultStatus.NotFound)).json({
+                errorsMessages: result.errorMessage
+            });
+            return;
+        }
+        if(result.status===ResultStatus.NoContent) {
+            res.sendStatus(HttpStatus.NoContent);
+        }
 
     } catch (e) {
         errorHandler(e, res);

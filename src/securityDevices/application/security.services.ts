@@ -50,8 +50,10 @@ export const securityService = {
         return ResultObject.NoContent();
     },
     async deleteSessionList(userId:string, deviceId: string): Promise<Result> {
-
-
-
+        const result = await sessionRepository.deleteSessionList(userId, deviceId);
+        if(result.deletedCount<1) {
+            return ResultObject.NotFound("userId", "Session for this user does not exist");
+        }
+        return ResultObject.NoContent();
     }
 }
