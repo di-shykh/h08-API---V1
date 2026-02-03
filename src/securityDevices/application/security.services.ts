@@ -48,5 +48,8 @@ export const securityService = {
             return ResultObject.NotFound("deviceId", "Session for this device does not exist");
         }
         return ResultObject.NoContent();
+    },
+    async deleteSessionList(userId:string, deviceId: string): Promise<Result> {
+
     }
 }
