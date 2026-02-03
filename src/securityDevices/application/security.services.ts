@@ -51,5 +51,7 @@ export const securityService = {
     },
     async deleteSessionList(userId:string, deviceId: string): Promise<Result> {
 
+
+
     }
 }

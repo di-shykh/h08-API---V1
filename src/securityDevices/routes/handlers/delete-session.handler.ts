@@ -40,5 +40,7 @@ export async function deleteSessionHandler(req: Request, res: Response) {
         }
     } catch (e: unknown) {
         errorHandler(e, res);
+
+
     }
 }
