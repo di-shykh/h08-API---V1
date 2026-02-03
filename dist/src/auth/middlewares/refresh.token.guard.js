@@ -8,34 +8,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RefereshTokenGuard = void 0;
 const http_statuses_1 = require("../../core/types/http-statuses");
 const jwt_service_1 = require("../application/jwt.service");
 const error_handler_1 = require("../../core/errors/error.handler");
-const blacklist_repository_1 = require("../repositories/blacklist.repository");
-const crypto_1 = __importDefault(require("crypto"));
+const session_query_repository_1 = require("../../securityDevices/repositories/session.query-repository");
 const RefereshTokenGuard = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const refreshToken = req.cookies.refreshToken;
         if (!refreshToken) {
             return res.status(http_statuses_1.HttpStatus.Unauthorized).json({ errorsMessages: [{ token: 'No refresh token' }] });
         }
-        const payload = yield jwt_service_1.jwtService.verifyToken(refreshToken);
+        const payload = yield jwt_service_1.jwtService.verifyTokenFull(refreshToken);
         if (!payload) {
             return res.status(http_statuses_1.HttpStatus.Unauthorized).json({ errorsMessages: [{ token: 'Invalid refresh token' }]
             });
         }
         const userId = payload.userId;
-        const tokenHash = crypto_1.default.createHash('sha256')
-            .update(refreshToken + (process.env.HASH_SALT || ''))
-            .digest('hex');
-        const resultFromBlackList = yield blacklist_repository_1.blacklistRepository.isTokenBlacklisted(tokenHash);
-        if (resultFromBlackList) {
-            return res.status(http_statuses_1.HttpStatus.Unauthorized).json({ errorsMessages: [{ token: 'Refresh token expired' }]
+        const deviceId = payload.deviceId;
+        const resultFromSession = yield session_query_repository_1.sessionQueryRepository.getSession(deviceId, userId);
+        if (!resultFromSession) {
+            return res.status(http_statuses_1.HttpStatus.Unauthorized).json({ errorsMessages: [{ token: 'Refresh token expired or not exist' }]
             });
         }
         req.userId = userId;

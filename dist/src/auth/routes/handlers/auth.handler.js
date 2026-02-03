@@ -14,17 +14,20 @@ const http_statuses_1 = require("../../../core/types/http-statuses");
 const auth_service_1 = require("../../application/auth.service");
 function authHandler(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         const { loginOrEmail, password } = req.body;
-        const tokenResult = yield auth_service_1.authService.loginUser(loginOrEmail, password);
+        const deviceName = (_a = req.headers['user-agent']) !== null && _a !== void 0 ? _a : 'Unknown';
+        const ipAddress = (_b = req.ip) !== null && _b !== void 0 ? _b : 'unknown';
+        const tokenResult = yield auth_service_1.authService.loginUser(loginOrEmail, password, deviceName, ipAddress);
         if (!tokenResult) {
             return res.sendStatus(http_statuses_1.HttpStatus.Unauthorized);
         }
         res.cookie('refreshToken', tokenResult.refreshToken, {
             httpOnly: true,
-            secure: true, //process.env.NODE_ENV === 'production', (HTTPS)
-            sameSite: 'strict', // или 'lax' / 'none'
-            maxAge: 20 * 1000, // 1 час в миллисекундах
-            path: '/auth/refresh-token', // доступен для всех путей
+            secure: true,
+            sameSite: 'strict',
+            maxAge: 20 * 1000,
+            path: '/auth/refresh-token',
         });
         return res.status(http_statuses_1.HttpStatus.Ok).json({
             accessToken: tokenResult.accessToken

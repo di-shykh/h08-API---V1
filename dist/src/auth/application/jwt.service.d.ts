@@ -1,6 +1,6 @@
 import { JwtPayload } from 'jsonwebtoken';
 export declare const jwtService: {
-    createToken(userId: string): Promise<{
+    createToken(userId: string, deviceId: string): Promise<{
         accessToken: string;
         refreshToken: string;
     }>;

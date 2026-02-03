@@ -52,6 +52,14 @@ class ResultObject {
             extensions: [],
         };
     }
+    static Unauthorized() {
+        return {
+            status: result_code_1.ResultStatus.Unauthorized,
+            data: null,
+            errorMessage: 'Unauthorized',
+            extensions: [],
+        };
+    }
     static InternalServerError(message) {
         return {
             status: result_code_1.ResultStatus.InternalServerError,

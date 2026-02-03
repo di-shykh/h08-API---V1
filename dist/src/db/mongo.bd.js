@@ -9,17 +9,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sessionCollection = exports.tokenListCollection = exports.commentCollection = exports.userCollection = exports.postCollection = exports.blogCollection = exports.client = void 0;
+exports.sessionCollection = exports.commentCollection = exports.userCollection = exports.postCollection = exports.blogCollection = exports.client = void 0;
 exports.runDB = runDB;
 exports.stopDb = stopDb;
 const mongodb_1 = require("mongodb");
 const settings_1 = require("../core/settings/settings");
-const ttl_indexes_blacklist_1 = require("./ttl.indexes.blacklist");
+const ttl_indexes_sessions_1 = require("./ttl.indexes.sessions");
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
 const USERS_COLLECTION_NAME = 'users';
 const COMMENTS_COLLECTION_NAME = 'comments';
-const BLACKLIST_COLLECTION_NAME = 'tokenBlacklist';
 const SESSION_COLLECTION_NAME = 'sessions';
 // Подключения к бд
 function runDB(url) {
@@ -32,14 +31,13 @@ function runDB(url) {
             exports.postCollection = db.collection(POST_COLLECTION_NAME);
             exports.userCollection = db.collection(USERS_COLLECTION_NAME);
             exports.commentCollection = db.collection(COMMENTS_COLLECTION_NAME);
-            exports.tokenListCollection = db.collection(BLACKLIST_COLLECTION_NAME);
             exports.sessionCollection = db.collection(SESSION_COLLECTION_NAME);
             yield exports.client.connect();
             yield db.command({ ping: 1 });
             console.log('✅ Connected to the database');
             // Создаем индексы
             yield createCollectionsIfNotExist(db);
-            yield (0, ttl_indexes_blacklist_1.createTTLIndex)(exports.tokenListCollection);
+            yield (0, ttl_indexes_sessions_1.createTTLIndex)(exports.sessionCollection);
         }
         catch (e) {
             yield exports.client.close();
@@ -66,7 +64,6 @@ function createCollectionsIfNotExist(db) {
             { name: POST_COLLECTION_NAME, options: {} },
             { name: USERS_COLLECTION_NAME, options: {} },
             { name: COMMENTS_COLLECTION_NAME, options: {} },
-            { name: BLACKLIST_COLLECTION_NAME, options: {} },
             { name: SESSION_COLLECTION_NAME, options: {} },
         ];
         for (const { name, options } of collectionsToCreate) {

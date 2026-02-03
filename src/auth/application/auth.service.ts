@@ -4,16 +4,12 @@ import {jwtService} from "./jwt.service";
 import {WithId} from "mongodb";
 import {UserDB} from "../../users/routes/output/user.db";
 import { v4 as uuidv4 } from 'uuid';
-import { addHours, addDays, isAfter } from 'date-fns';
+import { addHours, isAfter } from 'date-fns';
 import {usersQueryRepository} from "../../users/repositories/user.query-repository";
 import {UserCreateInput} from "../../users/routes/input/create-user.input";
 import {emailAdapter} from "../adapters/email.adapter";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
-import {blacklistRepository} from "../repositories/blacklist.repository";
-import {TokenBlacklistDB} from "../routes/types/token-blacklist.db";
-import crypto from 'crypto';
-import jwt from "jsonwebtoken";
 import {Session} from "../../securityDevices/domain/session";
 import {sessionRepository} from "../../securityDevices/repositories/session.repository";
 
@@ -125,54 +121,4 @@ export const authService = {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
     },
-    async addTokenToBlackList(token: string): Promise<Result<string | {message: string} | null>>{
-        try{
-            const decoded = await jwtService.verifyTokenFull(token);
-            if(!decoded){
-                return ResultObject.BadRequest('token', 'Invalid token')
-            }
-            if (decoded.type !== 'refresh') {
-                return ResultObject.BadRequest('token', 'Only refresh tokens can be blacklisted');
-            }
-            const  expiresAt = new Date(decoded.exp! * 1000);
-            const createdAt = new Date(decoded.iat! * 1000);
-            const tokenHash = crypto.createHash('sha256')
-                .update(token + process.env.HASH_SALT) // добавляем соль
-                .digest('hex');
-            const existing = await blacklistRepository.isTokenBlacklisted(tokenHash);
-            if (existing) {
-                return ResultObject.Success('Token already blacklisted');
-            }
-            //
-            const oldToken: TokenBlacklistDB = {
-                userId: decoded.userId,
-                refreshTokenHash: tokenHash,
-                expiresAt,
-                createdAt
-            }
-            const insertedTokenId: string = await blacklistRepository.insertToken(oldToken);
-            if(!insertedTokenId){
-                return ResultObject.InternalServerError('Token wasn\'t added to Blacklist' );
-            }
-        return ResultObject.Success('Expired token blacklisted');
-        } catch (e) {
-            console.error('Blacklist error:', e);
-
-            // Обработка специфических ошибок
-            if (e instanceof jwt.TokenExpiredError) {
-                // Можно добавить истёкший токен
-                const hash = crypto.createHash('sha256')
-                    .update(token + process.env.HASH_SALT) // добавляем соль
-                    .digest('hex');
-                await blacklistRepository.insertToken({
-                    refreshTokenHash: hash,
-                    userId: 'unknown', // или из decode
-                    expiresAt: new Date(),
-                    createdAt: new Date()
-                });
-                return ResultObject.Success('Expired token blacklisted');
-            }
-            return ResultObject.InternalServerError('Failed to blacklist token');
-        }
-    }
 }

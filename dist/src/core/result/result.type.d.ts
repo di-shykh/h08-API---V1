@@ -16,6 +16,7 @@ export declare class ResultObject {
     static NotFound(field: string, message: string): Result<null>;
     static BadRequest(field: string, message: string): Result<null>;
     static Forbidden(): Result<null>;
+    static Unauthorized(): Result<null>;
     static InternalServerError(message?: string): Result<null>;
 }
 export {};

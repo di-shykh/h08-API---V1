@@ -2,8 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import {HttpStatus} from "../../core/types/http-statuses";
 import {jwtService} from "../application/jwt.service";
 import {errorHandler} from "../../core/errors/error.handler";
-import {blacklistRepository} from "../repositories/blacklist.repository";
-import crypto from "crypto";
+import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
 
 export const RefereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
@@ -12,20 +11,18 @@ export const RefereshTokenGuard = async (req: Request, res: Response, next: Next
            return res.status(HttpStatus.Unauthorized).json(
                { errorsMessages: [{token: 'No refresh token'}] });
        }
-       const payload = await jwtService.verifyToken(refreshToken);
+       const payload = await jwtService.verifyTokenFull(refreshToken);
        if (!payload) {
            return res.status(HttpStatus.Unauthorized).json(
                { errorsMessages: [{token: 'Invalid refresh token'}]
                })
        }
        const userId: string = payload.userId;
-       const tokenHash: string = crypto.createHash('sha256')
-           .update(refreshToken + (process.env.HASH_SALT || ''))
-           .digest('hex');
-       const resultFromBlackList = await blacklistRepository.isTokenBlacklisted(tokenHash);
-       if(resultFromBlackList) {
+       const deviceId: string = payload.deviceId;
+       const resultFromSession = await sessionQueryRepository.getSession(deviceId,userId);
+       if(!resultFromSession) {
            return res.status(HttpStatus.Unauthorized).json(
-               { errorsMessages: [{token: 'Refresh token expired'}]
+               { errorsMessages: [{token: 'Refresh token expired or not exist'}]
                })
        }
        req.userId = userId;

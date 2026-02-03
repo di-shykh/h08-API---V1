@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {jwtService} from "../../application/jwt.service";
 import {HttpStatus} from "../../../core/types/http-statuses";
-import {authService} from "../../application/auth.service";
 import {errorHandler} from "../../../core/errors/error.handler";
 import {ResultStatus} from "../../../core/result/result.code";
 import {securityService} from "../../../securityDevices/application/security.services";

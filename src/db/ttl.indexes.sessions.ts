@@ -1,18 +1,18 @@
 
 import {Collection} from "mongodb";
-import {TokenBlacklistDB} from "../auth/routes/types/token-blacklist.db";
-//ttl indexes for blacklist
-export async function createTTLIndex(tokenListCollection: Collection<TokenBlacklistDB>): Promise<void> {
-    try {
-        if (!tokenListCollection) throw new Error('Collection not initialized');
+import {Session} from "../securityDevices/domain/session";
 
-        const indexes = await tokenListCollection.indexes();
+export async function createTTLIndex(sessionCollection: Collection<Session>): Promise<void> {
+    try {
+        if (!sessionCollection) throw new Error('Collection not initialized');
+
+        const indexes = await sessionCollection.indexes();
         const ttlIndexExists = indexes.some(
             index => index.name === 'expiresAt_ttl_index'
         );
 
         if (!ttlIndexExists) {
-            await tokenListCollection.createIndex(
+            await sessionCollection.createIndex(
                 { expiresAt: 1 },
                 {
                     expireAfterSeconds: 0,

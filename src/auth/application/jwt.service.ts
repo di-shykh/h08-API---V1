@@ -1,5 +1,4 @@
 import jwt, {JwtPayload} from 'jsonwebtoken';
-import {Session} from "../../securityDevices/domain/session";
 
 export const jwtService ={
     async   createToken (userId: string, deviceId:string): Promise<{

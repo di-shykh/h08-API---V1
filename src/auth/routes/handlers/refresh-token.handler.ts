@@ -1,9 +1,7 @@
 import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
-import {authService} from "../../application/auth.service";
 import {jwtService} from "../../application/jwt.service";
 import {errorHandler} from "../../../core/errors/error.handler";
-import {sessionRepository} from "../../../securityDevices/repositories/session.repository";
 import {sessionQueryRepository} from "../../../securityDevices/repositories/session.query-repository";
 import {securityService} from "../../../securityDevices/application/security.services";
 

@@ -15,14 +15,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.jwtService = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 exports.jwtService = {
-    createToken(userId) {
+    createToken(userId, deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
             const secret = process.env.JWT_SECRET;
             if (!secret) {
                 throw new Error('JWT_SECRET is not defined in environment variables');
             }
             const accessToken = jsonwebtoken_1.default.sign({ userId, type: 'access', iat: Date.now() }, secret, { expiresIn: '10s' });
-            const refreshToken = jsonwebtoken_1.default.sign({ userId, type: 'refresh', iat: Date.now() }, secret, { expiresIn: '20s' });
+            const refreshToken = jsonwebtoken_1.default.sign({ userId, deviceId, type: 'refresh', iat: Date.now() }, secret, { expiresIn: '20s' });
             return { accessToken, refreshToken };
         });
     },

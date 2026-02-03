@@ -12,9 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.logoutHandler = logoutHandler;
 const jwt_service_1 = require("../../application/jwt.service");
 const http_statuses_1 = require("../../../core/types/http-statuses");
-const auth_service_1 = require("../../application/auth.service");
 const error_handler_1 = require("../../../core/errors/error.handler");
 const result_code_1 = require("../../../core/result/result.code");
+const security_services_1 = require("../../../securityDevices/application/security.services");
+const session_query_repository_1 = require("../../../securityDevices/repositories/session.query-repository");
 function logoutHandler(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -24,19 +25,22 @@ function logoutHandler(req, res) {
                     errorsMessages: [{ message: 'No refresh token' }]
                 });
             }
-            const decodedPayload = yield jwt_service_1.jwtService.verifyToken(oldRefreshToken);
+            const decodedPayload = yield jwt_service_1.jwtService.verifyTokenFull(oldRefreshToken);
             if (!decodedPayload) {
                 return res.sendStatus(http_statuses_1.HttpStatus.Unauthorized);
             }
-            const result = yield auth_service_1.authService.addTokenToBlackList(oldRefreshToken);
+            const session = yield session_query_repository_1.sessionQueryRepository.getSession(decodedPayload.deviceId, decodedPayload.userId);
+            if (!session) {
+                return res.sendStatus(http_statuses_1.HttpStatus.Unauthorized);
+            }
+            const result = yield security_services_1.securityService.deleteSession(session._id.toString());
             clearRefreshTokenCookie(res);
-            if (result.status === result_code_1.ResultStatus.Success) {
+            if (result.status === result_code_1.ResultStatus.NoContent) {
                 return res.status(http_statuses_1.HttpStatus.NoContent).json({
                     message: 'Successfully logged out'
                 });
             }
             else {
-                // Токен добавлен в чёрный список, но была какая-то проблема
                 return res.status(http_statuses_1.HttpStatus.NoContent).json({
                     message: 'Logged out (token may be expired)'
                 });
@@ -50,7 +54,7 @@ function logoutHandler(req, res) {
 function clearRefreshTokenCookie(res) {
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         sameSite: 'strict',
         path: '/auth/refresh-token'
     });

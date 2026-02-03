@@ -8,9 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authService = void 0;
 const user_repository_1 = require("../../users/repositories/user.repository");
@@ -22,11 +19,9 @@ const user_query_repository_1 = require("../../users/repositories/user.query-rep
 const email_adapter_1 = require("../adapters/email.adapter");
 const result_type_1 = require("../../core/result/result.type");
 const normolize_email_1 = require("../../core/helpers/normolize-email");
-const blacklist_repository_1 = require("../repositories/blacklist.repository");
-const crypto_1 = __importDefault(require("crypto"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const session_repository_1 = require("../../securityDevices/repositories/session.repository");
 exports.authService = {
-    loginUser(loginOrEmail, password) {
+    loginUser(loginOrEmail, password, deviceName, ipAddress) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield user_query_repository_1.usersQueryRepository.findByLoginOrEmail(loginOrEmail);
             if (!user)
@@ -34,7 +29,28 @@ exports.authService = {
             const result = yield bcrypt_service_1.bcryptService.checkPassword(password, user.passwordHash);
             if (!result)
                 return null;
-            const { accessToken, refreshToken } = yield jwt_service_1.jwtService.createToken(user._id.toString());
+            const deviceId = (0, uuid_1.v4)();
+            const userId = user._id.toString();
+            const { accessToken, refreshToken } = yield jwt_service_1.jwtService.createToken(user._id.toString(), deviceId);
+            const payload = jwt_service_1.jwtService.verifyTokenFull(refreshToken);
+            if (!payload) {
+                return null;
+            }
+            if (!payload.iat) {
+                return null;
+            }
+            const iat = payload.iat || Math.floor(Date.now() / 1000);
+            const session = {
+                userId,
+                deviceId,
+                deviceName,
+                ipAddress,
+                iat: new Date(iat * 1000),
+                exp: new Date(Date.now() + 20000),
+            };
+            const sessionId = yield session_repository_1.sessionRepository.createSession(session);
+            if (!sessionId)
+                return null;
             return { accessToken, refreshToken };
         });
     },
@@ -121,57 +137,5 @@ exports.authService = {
             }
         });
     },
-    addTokenToBlackList(token) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const decoded = yield jwt_service_1.jwtService.verifyTokenFull(token);
-                if (!decoded) {
-                    return result_type_1.ResultObject.BadRequest('token', 'Invalid token');
-                }
-                if (decoded.type !== 'refresh') {
-                    return result_type_1.ResultObject.BadRequest('token', 'Only refresh tokens can be blacklisted');
-                }
-                const expiresAt = new Date(decoded.exp * 1000);
-                const createdAt = new Date(decoded.iat * 1000);
-                const tokenHash = crypto_1.default.createHash('sha256')
-                    .update(token + process.env.HASH_SALT) // добавляем соль
-                    .digest('hex');
-                const existing = yield blacklist_repository_1.blacklistRepository.isTokenBlacklisted(tokenHash);
-                if (existing) {
-                    return result_type_1.ResultObject.Success('Token already blacklisted');
-                }
-                //
-                const oldToken = {
-                    userId: decoded.userId,
-                    refreshTokenHash: tokenHash,
-                    expiresAt,
-                    createdAt
-                };
-                const insertedTokenId = yield blacklist_repository_1.blacklistRepository.insertToken(oldToken);
-                if (!insertedTokenId) {
-                    return result_type_1.ResultObject.InternalServerError('Token wasn\'t added to Blacklist');
-                }
-                return result_type_1.ResultObject.Success('Expired token blacklisted');
-            }
-            catch (e) {
-                console.error('Blacklist error:', e);
-                // Обработка специфических ошибок
-                if (e instanceof jsonwebtoken_1.default.TokenExpiredError) {
-                    // Можно добавить истёкший токен
-                    const hash = crypto_1.default.createHash('sha256')
-                        .update(token + process.env.HASH_SALT) // добавляем соль
-                        .digest('hex');
-                    yield blacklist_repository_1.blacklistRepository.insertToken({
-                        refreshTokenHash: hash,
-                        userId: 'unknown', // или из decode
-                        expiresAt: new Date(),
-                        createdAt: new Date()
-                    });
-                    return result_type_1.ResultObject.Success('Expired token blacklisted');
-                }
-                return result_type_1.ResultObject.InternalServerError('Failed to blacklist token');
-            }
-        });
-    }
 };
 //# sourceMappingURL=auth.service.js.map

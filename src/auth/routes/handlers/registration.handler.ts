@@ -4,7 +4,7 @@ import {authService} from "../../application/auth.service";
 import {ResultStatus} from "../../../core/result/result.code";
 import {resultCodeToHttpException} from "../../../core/result/resultCodeToHttpExeptions";
 import {HttpStatus} from "../../../core/types/http-statuses";
-import {Result, ResultObject} from "../../../core/result/result.type";
+import {Result} from "../../../core/result/result.type";
 
 export async function registrationHandler(req: Request, res: Response) {
     try {
