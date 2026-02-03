@@ -3,6 +3,7 @@ import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {jwtService} from "../../../auth/application/jwt.service";
 import {sessionQueryRepository} from "../../repositories/session.query-repository";
+import {ResultObject} from "../../../core/result/result.type";
 
 export async function getSessionListHandler(req: Request, res: Response) {
     try {
@@ -25,7 +26,8 @@ export async function getSessionListHandler(req: Request, res: Response) {
             })
         }
         const sessionsOutput = await sessionQueryRepository.mapToSessionOutput(sessions);
-
+        const result = ResultObject.Success(sessionsOutput);
+        return res.status(HttpStatus.Ok).json(result.data);
     } catch (e: unknown) {
         errorHandler(e, res);
     }

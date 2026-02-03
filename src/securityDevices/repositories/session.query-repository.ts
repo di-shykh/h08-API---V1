@@ -12,14 +12,13 @@ export const sessionQueryRepository = {
         return session;
     },
     async getSessionsByUserId(userId: string): Promise<WithId<Session>[]|null> {
-        const sessions = await sessionCollection.find({userId}).toArray();
-        return sessions;
+        return await sessionCollection.find({userId}).toArray();
     },
     async mapToSessionOutput(sessions: WithId<Session>[]): Promise<SessionOutput[]|null> {
         if (!sessions || sessions.length===0) {
             return null;
         }
-        const sessionsView = sessions.map((session: WithId<Session>) => {
+        return sessions.map((session: WithId<Session>) => {
             return {
                 ip: session.ipAddress,
                 title: session.deviceName,
@@ -27,6 +26,5 @@ export const sessionQueryRepository = {
                 deviceId: session.deviceId,
             }
         })
-        return sessionsView;
     }
 }
