@@ -34,5 +34,19 @@ export const securityService = {
            return ResultObject.Unauthorized();
        }
        return ResultObject.NoContent();
+    },
+    async deleteSessionByDeviceId(deviceId: string, userId:string): Promise<Result> {
+        const session = await sessionRepository.findByDeviceId(deviceId);
+        if (!session) {
+            return ResultObject.NotFound("deviceId", "Session for this device does not exist");
+        }
+        if(session.userId===userId) {
+            return ResultObject.Forbidden();
+        }
+        const result: DeleteResult = await sessionRepository.deleteSessionForDevice(session.deviceId);
+        if(result.deletedCount<1) {
+            return ResultObject.NotFound("deviceId", "Session for this device does not exist");
+        }
+        return ResultObject.NoContent();
     }
 }

@@ -24,5 +24,13 @@ export const sessionRepository = {
             },
         );
         return updatedSession;
+    },
+    async findByDeviceId(deviceId: string): Promise<WithId<Session>|null> {
+        const session: WithId<Session>|null = await sessionCollection.findOne({deviceId});
+        return session;
+    },
+    async deleteSessionForDevice(deviceId: string): Promise<DeleteResult> {
+        const deletedSession = await sessionCollection.deleteOne({deviceId});
+        return deletedSession;
     }
 }
