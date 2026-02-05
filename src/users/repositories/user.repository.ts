@@ -2,6 +2,7 @@ import {UserDB} from "../routes/output/user.db";
 import {userCollection} from "../../db/mongo.bd";
 import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
+import {normalizeEmail} from "../../core/helpers/normolize-email";
 
 export const usersRepository = {
     async createUser(newUser: UserDB): Promise<string> {
@@ -48,5 +49,30 @@ export const usersRepository = {
             console.error("Error updating email confirmation:", error);
             return false;
         }
-    }
+    },
+    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
+        const normalizedEmail = normalizeEmail(loginOrEmail);
+        return await userCollection.findOne({
+            $or: [{login: loginOrEmail }, { email: normalizedEmail }],
+        });
+    },
+    async isEmailUnique(email: string): Promise<Boolean> {
+        const normalizedEmail = normalizeEmail(email);
+        const user = await userCollection.findOne({email: normalizedEmail});
+        return !user;
+    },
+    async isLoginUnique(login: string): Promise<Boolean> {
+        const loginUser = login.trim();
+        const user = await userCollection.findOne({login: loginUser});
+        return !user;
+    },
+    async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
+        const user: WithId<UserDB>|null = await userCollection.findOne({"emailConfirmation.confirmationCode": code});
+        return user;
+    },
+    async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
+        const normalizedEmail = normalizeEmail(email);
+        const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
+        return user;
+    },
 }

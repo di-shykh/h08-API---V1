@@ -4,7 +4,7 @@ import {jwtService} from "../application/jwt.service";
 import {errorHandler} from "../../core/errors/error.handler";
 import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
 
-export const RefereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
+export const RefrereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
        const refreshToken = req.cookies.refreshToken;
        if (!refreshToken) {
@@ -19,6 +19,12 @@ export const RefereshTokenGuard = async (req: Request, res: Response, next: Next
        }
        const userId: string = payload.userId;
        const deviceId: string = payload.deviceId;
+
+       if (!userId || !deviceId) {
+           return res.status(HttpStatus.Unauthorized).json({
+               errorsMessages: [{ message: 'Invalid token payload' }]
+           });
+       }
        const resultFromSession = await sessionQueryRepository.getSession(deviceId,userId);
        if(!resultFromSession) {
            return res.status(HttpStatus.Unauthorized).json(
@@ -26,6 +32,7 @@ export const RefereshTokenGuard = async (req: Request, res: Response, next: Next
                })
        }
        req.userId = userId;
+       req.deviceId = deviceId;
        next();
        return;
    } catch (e: unknown) {

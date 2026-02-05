@@ -9,10 +9,10 @@ export async function createTTLIndexes(): Promise<void> {
 
         // TTL для сессий (предполагаем, что expiresAt - это дата истечения)
         const sessionIndexes = await sessionCollection.indexes();
-        if (!sessionIndexes.some(idx => idx.name === 'expiresAt_ttl_index')) {
+        if (!sessionIndexes.some(idx => idx.name === 'exp_ttl_index')) {
             await sessionCollection.createIndex(
-                { expiresAt: 1 },
-                { expireAfterSeconds: 0, name: 'expiresAt_ttl_index' }
+                { exp: 1 },
+                { expireAfterSeconds: 0, name: 'exp_ttl_index' }
             );
             console.log('✅ Session TTL index created');
         }

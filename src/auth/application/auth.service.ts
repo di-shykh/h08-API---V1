@@ -15,22 +15,18 @@ import {sessionRepository} from "../../securityDevices/repositories/session.repo
 
 export const authService = {
     async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
-        const user: WithId<UserDB>|null = await usersQueryRepository.findByLoginOrEmail(loginOrEmail);
+        const user: WithId<UserDB>|null = await usersRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await bcryptService.checkPassword(password, user.passwordHash);
+        console.log('result bcrypt', result);
         if (!result) return null;
         const deviceId: string = uuidv4();
         const userId = user._id.toString();
 
         const {accessToken, refreshToken} = await jwtService.createToken(user._id.toString(), deviceId);
-        const payload = jwtService.verifyTokenFull(refreshToken);
-        if (!payload){
-            return null;
-        }
-        if (!(payload as any).iat) {
-            return null;
-        }
-        const iat = (payload as any).iat || Math.floor(Date.now() / 1000);
+        const payload = await jwtService.verifyTokenFull(refreshToken);
+
+        const iat = payload!.iat || Math.floor(Date.now() / 1000);
         const session: Session = {
             userId,
             deviceId,
@@ -47,12 +43,12 @@ export const authService = {
 
         const {login, email, password} = userInputDto;
         const normalizedEmail = normalizeEmail(email);
-        const isLoginUnique = await usersQueryRepository.isLoginUnique(login);
+        const isLoginUnique = await usersRepository.isLoginUnique(login);
         if (!isLoginUnique) {
           return   ResultObject.BadRequest('login', 'Login already exists');
         }
 
-        const isEmailUnique = await usersQueryRepository.isEmailUnique(normalizedEmail);
+        const isEmailUnique = await usersRepository.isEmailUnique(normalizedEmail);
         if (!isEmailUnique) {
            return  ResultObject.BadRequest('email', 'Email already exists');
         }
@@ -84,7 +80,7 @@ export const authService = {
         if (!code || code.length !== 36) { // UUID v4 имеет 36 символов
             return ResultObject.BadRequest('code', 'Invalid confirmation code format');
         }
-        const user: WithId<UserDB>|null = await usersQueryRepository.findByConfirmationCode(code);
+        const user: WithId<UserDB>|null = await usersRepository.findByConfirmationCode(code);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('code', 'Code does not exist');
         }
@@ -103,7 +99,7 @@ export const authService = {
         return ResultObject.Success(result);
     },
     async resendEmail(email: string): Promise<Result<boolean|null>> {
-        const user: WithId<UserDB>|null = await usersQueryRepository.findUserByEmail(email);
+        const user: WithId<UserDB>|null = await usersRepository.findUserByEmail(email);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('email', 'User with this email is not exists');
         }

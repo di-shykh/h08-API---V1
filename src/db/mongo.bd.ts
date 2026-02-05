@@ -35,7 +35,7 @@ export async function runDB(url: string): Promise<void> {
         userCollection = db.collection<UserDB>(USERS_COLLECTION_NAME)
         commentCollection = db.collection<CommentDB>(COMMENTS_COLLECTION_NAME);
         sessionCollection = db.collection<Session>(SESSION_COLLECTION_NAME);
-        rateLimitCollection = db.collection<RateLimit>(COMMENTS_COLLECTION_NAME);
+        rateLimitCollection = db.collection<RateLimit>(RATE_LIMIT_COLLECTION_NAME);
         await client.connect();
         await db.command({ ping: 1 });
         console.log('✅ Connected to the database');
