@@ -1,9 +1,0 @@
-export declare enum CommentSortField {
-    CreatedAt = "createdAt",
-    Content = "content",
-    Id = "id",
-    UserId = "userId",
-    UserLogin = "userLogin",// если нужно сортировать по логину пользователя
-    PostId = "postId"
-}
-//# sourceMappingURL=comment-sort-field.d.ts.map

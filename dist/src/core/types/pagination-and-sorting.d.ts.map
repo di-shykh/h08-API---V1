@@ -1,1 +1,0 @@
-{"version":3,"file":"pagination-and-sorting.d.ts","sourceRoot":"","sources":["../../../../src/core/types/pagination-and-sorting.ts"],"names":[],"mappings":"AAAA,OAAO,EAAC,aAAa,EAAC,MAAM,kBAAkB,CAAC;AAE/C,MAAM,MAAM,oBAAoB,CAAC,CAAC,IAAI;IAClC,UAAU,EAAE,MAAM,CAAC;IACnB,QAAQ,EAAE,MAAM,CAAC;IACjB,MAAM,EAAE,CAAC,CAAC;IACV,aAAa,EAAE,aAAa,CAAC;CAChC,CAAA"}

@@ -1,31 +1,34 @@
-
 import {Collection} from "mongodb";
 import {Session} from "../securityDevices/domain/session";
+import {RateLimit} from "../auth/types/rate-limit";
 
-export async function createTTLIndex(sessionCollection: Collection<Session>): Promise<void> {
+export async function createTTLIndexes(): Promise<void> {
     try {
-        if (!sessionCollection) throw new Error('Collection not initialized');
+        // Получите коллекции из вашего mongo.bd файла
+        const { sessionCollection, rateLimitCollection } = await import('../db/mongo.bd');
 
-        const indexes = await sessionCollection.indexes();
-        const ttlIndexExists = indexes.some(
-            index => index.name === 'expiresAt_ttl_index'
-        );
-
-        if (!ttlIndexExists) {
+        // TTL для сессий (предполагаем, что expiresAt - это дата истечения)
+        const sessionIndexes = await sessionCollection.indexes();
+        if (!sessionIndexes.some(idx => idx.name === 'expiresAt_ttl_index')) {
             await sessionCollection.createIndex(
                 { expiresAt: 1 },
-                {
-                    expireAfterSeconds: 0,
-                    name: 'expiresAt_ttl_index',
-                    background: true
-                }
+                { expireAfterSeconds: 0, name: 'expiresAt_ttl_index' }
             );
-            console.log('TTL index created');
-        } else {
-            console.log('TTL index already exists');
+            console.log('✅ Session TTL index created');
         }
+
+        // TTL для rate limit (удалять записи старше 10 секунд)
+        const rateLimitIndexes = await rateLimitCollection.indexes();
+        if (!rateLimitIndexes.some(idx => idx.name === 'date_ttl_index')) {
+            await rateLimitCollection.createIndex(
+                { date: 1 },
+                { expireAfterSeconds: 10, name: 'date_ttl_index' }
+            );
+            console.log('✅ Rate limit TTL index created (10s retention)');
+        }
+
     } catch (error) {
-        console.error('Failed to create TTL index:', error);
+        console.error('Failed to create TTL indexes:', error);
         throw error;
     }
 }

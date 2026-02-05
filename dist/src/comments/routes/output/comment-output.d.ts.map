@@ -1,1 +1,0 @@
-{"version":3,"file":"comment-output.d.ts","sourceRoot":"","sources":["../../../../../src/comments/routes/output/comment-output.ts"],"names":[],"mappings":"AAAA,OAAO,EAAC,eAAe,EAAC,MAAM,8BAA8B,CAAC;AAE7D,MAAM,MAAM,aAAa,GAAG;IACxB,EAAE,EAAE,MAAM,CAAC;IACX,OAAO,EAAE,MAAM,CAAC;IAChB,eAAe,EAAE,eAAe,CAAC;IACjC,SAAS,EAAE,MAAM,CAAC;CACrB,CAAA"}
