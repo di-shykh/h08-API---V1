@@ -9,33 +9,22 @@ import {Result} from "../../../core/result/result.type";
 
 export async function deleteSessionHandler(req: Request, res: Response) {
     try {
-        const refreshToken = req.cookies.refreshToken;
-        if (!refreshToken) {
-            return res.status(HttpStatus.Unauthorized).json({
-                errorsMessages: [{message: 'No refresh token'}]
-            });
-        }
-        const decodedPayload = await jwtService.verifyToken(refreshToken);
-        if (!decodedPayload || !decodedPayload.userId) {
-            return res.status(HttpStatus.Unauthorized).json({
-                errorsMessages: [{message: 'Refresh token is not valid'}]
-            });
-        }
+        const userId = req.userId;
         const deviceId = req.params.id as string;
-        const result: Result = await securityService.deleteSessionByDeviceId(deviceId, decodedPayload.userId);
+        const result: Result = await securityService.deleteSessionByDeviceId(deviceId, userId!);
         if (result.status===ResultStatus.Forbidden) {
             res.status(resultCodeToHttpException(ResultStatus.Forbidden)).json({
                 errorsMessages: result.errorMessage
             });
             return;
         }
-        if (result.status===ResultStatus.NotFound) {
+        if (result.status === ResultStatus.NotFound) {
             res.status(resultCodeToHttpException(ResultStatus.NotFound)).json({
                 errorsMessages: result.errorMessage
             });
             return;
         }
-        if(result.status===ResultStatus.NoContent) {
+        if(result.status === ResultStatus.NoContent) {
             res.sendStatus(HttpStatus.NoContent);
         }
     } catch (e: unknown) {

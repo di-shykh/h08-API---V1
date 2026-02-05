@@ -4,7 +4,7 @@ import {jwtService} from "../application/jwt.service";
 import {errorHandler} from "../../core/errors/error.handler";
 import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
 
-export const RefrereshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
+export const RefreshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
        const refreshToken = req.cookies.refreshToken;
        if (!refreshToken) {

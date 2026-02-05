@@ -13,14 +13,6 @@ export const jwtService ={
         const refreshToken: string = jwt.sign({ userId, deviceId, type: 'refresh', iat: Date.now()  }, secret, { expiresIn: '20s' });
         return { accessToken, refreshToken };
     },
-    async decodeToken(token: string): Promise<any> {
-        try{
-            return jwt.decode(token);
-        } catch (e) {
-            console.error("Can't decode token",e);
-            return null;
-        }
-    },
     async verifyToken(token: string): Promise<{ userId: string }|null> {
         try {
             return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };

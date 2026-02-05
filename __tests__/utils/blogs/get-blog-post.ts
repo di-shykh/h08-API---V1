@@ -8,7 +8,7 @@ import {HttpStatus} from "../../../src/core/types/http-statuses";
 export async function getBlogPosts(
     app: Express,
     blogId: string,
-    ): Promise<PostOutput>[] {
+    ) {
     const postResponse = await request(app)
         .get(`${BLOGS_PATH}/${blogId}/posts`)
         .set('Authorization', generateBasicAuthToken())

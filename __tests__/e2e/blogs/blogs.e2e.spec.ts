@@ -127,10 +127,10 @@ describe("Blogs API", () => {
                 blogId: blog.id,
             }),
         ]);
-        const posts = await getBlogPosts(app, blog.id);
-
-        expect(posts.items.length).toBeGreaterThanOrEqual(3);
-        expect(posts.items).toBeInstanceOf(Array);
+        const postsResponse = await getBlogPosts(app, blog.id);
+        const posts = postsResponse.items || postsResponse;
+        expect(posts.length).toBeGreaterThanOrEqual(3);
+        expect(posts).toBeInstanceOf(Array);
     })
     it('should return blogs list with pagination, sorting: GET /hometask_04/api/blogs/', async () => {
         await clearDb(app);
@@ -170,7 +170,7 @@ describe("Blogs API", () => {
         expect(response.body.items).toHaveLength(10);
 
         // Проверяем сортировку по убыванию даты
-        const dates = response.body.items.map(item => new Date(item.createdAt));
+        const dates = response.body.items.map((item: any) => new Date(item.createdAt));
         for (let i = 0; i < dates.length - 1; i++) {
             expect(dates[i] >= dates[i + 1]).toBe(true);
         }

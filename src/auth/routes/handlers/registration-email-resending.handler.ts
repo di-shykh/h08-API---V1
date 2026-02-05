@@ -9,7 +9,7 @@ export async function registrationEmailResendingHandler(req: Request, res: Respo
    try{
        const {email} = req.body;
        const result= await authService.resendEmail(email);
-       if(result.status!== ResultStatus.Success){
+       if(result.status !== ResultStatus.Success){
            if (result.status === ResultStatus.BadRequest) {
                return res.status(HttpStatus.BadRequest).json({
                    errorsMessages: result.extensions

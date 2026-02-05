@@ -15,12 +15,18 @@ export async function logoutHandler(req: Request, res: Response) {
             });
         }
         const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
-        if (!decodedPayload) {
+        if (!decodedPayload||!decodedPayload.userId||!decodedPayload.iat) {
             return res.sendStatus(HttpStatus.Unauthorized);
         }
         const session = await sessionQueryRepository.getSession(decodedPayload.deviceId,decodedPayload.userId)
         if (!session) {
             return res.sendStatus(HttpStatus.Unauthorized);
+        }
+        const tokenIatDate = new Date(decodedPayload!.iat*1000);
+        if(session.iat.getTime()!==tokenIatDate.getTime()) {
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{message: 'Refresh token is no longer valid (was already refreshed)'}]
+            });
         }
         const result = await securityService.deleteSession(session._id.toString());
         clearRefreshTokenCookie(res);
@@ -29,7 +35,7 @@ export async function logoutHandler(req: Request, res: Response) {
                 message: 'Successfully logged out'
             });
         } else {
-            return res.status(HttpStatus.NoContent).json({
+            return res.status(HttpStatus.Unauthorized).json({
                 message: 'Logged out (token may be expired)'
             });
         }

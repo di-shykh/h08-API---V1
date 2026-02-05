@@ -9,26 +9,21 @@ import {resultCodeToHttpException} from "../../../core/result/resultCodeToHttpEx
 
 export async function deleteSessionListHandler(req: Request, res: Response) {
     try {
-        const refreshToken = req.cookies.refreshToken;
-        if (!refreshToken) {
-            return res.status(HttpStatus.Unauthorized).json({
-                errorsMessages: [{message: 'No refresh token'}]
-            });
-        }
-        const decodedPayload = await jwtService.verifyTokenFull(refreshToken);
-        if (!decodedPayload || !decodedPayload.userId || decodedPayload.deviceId) {
+        const userId = req.userId;
+        const deviceId = req.deviceId;
+        if (!userId || !deviceId) {
             return res.status(HttpStatus.Unauthorized).json({
                 errorsMessages: [{message: 'Refresh token is not valid'}]
             });
         }
-        const result: Result = await securityService.deleteSessionList(decodedPayload.userId, decodedPayload.deviceId);
-        if(result.status===ResultStatus.NotFound) {
+        const result: Result = await securityService.deleteSessionList(userId, deviceId);
+        if(result.status === ResultStatus.NotFound) {
             res.status(resultCodeToHttpException(ResultStatus.NotFound)).json({
                 errorsMessages: result.errorMessage
             });
             return;
         }
-        if(result.status===ResultStatus.NoContent) {
+        if(result.status === ResultStatus.NoContent) {
             res.sendStatus(HttpStatus.NoContent);
         }
 

@@ -32,6 +32,12 @@ export async function refreshTokenHandler (req: Request, res: Response) {
                 errorsMessages: [{ message: 'Refresh token is not valid' }]
             });
         }
+        const tokenIatDate = new Date(iat * 1000);
+        if(session.iat.getTime() !== tokenIatDate.getTime()) {
+            return res.status(HttpStatus.Unauthorized).json({
+                errorsMessages: [{message: 'Refresh token is no longer valid (was already refreshed)'}]
+            });
+        }
         const tokenResult = await securityService.refreshToken(session);
         if(!tokenResult){
             return res.status(HttpStatus.Unauthorized).json({

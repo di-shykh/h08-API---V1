@@ -40,7 +40,7 @@ export const securityService = {
         if (!session) {
             return ResultObject.NotFound("deviceId", "Session for this device does not exist");
         }
-        if(session.userId===userId) {
+        if(session.userId!==userId) {
             return ResultObject.Forbidden();
         }
         const result: DeleteResult = await sessionRepository.deleteSessionForDevice(session.deviceId);

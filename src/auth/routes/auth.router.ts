@@ -16,7 +16,7 @@ import {registrationEmailResendingHandler} from "./handlers/registration-email-r
 import {rateLimitGuard} from "../middlewares/rate-limiting.middleware";
 import rateLimit from "express-rate-limit";
 import {refreshTokenHandler} from "./handlers/refresh-token.handler";
-import {RefrereshTokenGuard} from "../middlewares/refresh.token.guard"
+import {RefreshTokenGuard} from "../middlewares/refresh.token.guard"
 import {logoutHandler} from "./handlers/logout.handler";
 
 
@@ -25,7 +25,7 @@ export const authRouter: Router = Router({});
 authRouter
     .post(
     "/login",
-      //  rateLimitGuard,
+        rateLimitGuard,
         passwordValidation,
         loginOrEmailValidation,
         inputValidationResultMiddleware,
@@ -58,11 +58,11 @@ authRouter
     )
     .post(
         "/refresh-token",
-        RefrereshTokenGuard,
+        RefreshTokenGuard,
         refreshTokenHandler
     )
     .post(
         "/logout",
-        RefrereshTokenGuard,
+        RefreshTokenGuard,
         logoutHandler
     )

@@ -18,7 +18,6 @@ export const authService = {
         const user: WithId<UserDB>|null = await usersRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await bcryptService.checkPassword(password, user.passwordHash);
-        console.log('result bcrypt', result);
         if (!result) return null;
         const deviceId: string = uuidv4();
         const userId = user._id.toString();

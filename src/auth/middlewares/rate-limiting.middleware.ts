@@ -12,14 +12,12 @@ export const rateLimitGuard= async (req: Request, res: Response, next: NextFunct
         const EXTRA_BUFFER_MS = 1000;
 
         const ip: string = req.ip || 'unknown';
-        const url: string = req.baseUrl || req.originalUrl || req.url || '/';
+        const url: string =req.originalUrl || req.baseUrl || req.url || '/';
         const date: Date = new Date();
         const timeLimit = new Date(Date.now() - TIME_WINDOW_MS);
         const deleteTimeLimit = new Date(Date.now() - (TIME_WINDOW_MS + EXTRA_BUFFER_MS));
 
-        await rateLimitCollection.deleteMany({
-            date: { $lt: deleteTimeLimit }
-        });
+
 
         const requestsCount: number = await rateLimitCollection.countDocuments({
             ip, url, date: {$gte: timeLimit}
@@ -30,6 +28,11 @@ export const rateLimitGuard= async (req: Request, res: Response, next: NextFunct
                 errorsMessages: [{ message: 'Too many requests' }]
             });
         }
+
+        await rateLimitCollection.deleteMany({
+            date: { $lt: deleteTimeLimit }
+        });
+
         const result: InsertOneResult<RateLimit> = await rateLimitCollection.insertOne({ip, url, date});
 
         if(!result.insertedId){
