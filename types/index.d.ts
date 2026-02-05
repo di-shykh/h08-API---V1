@@ -1,0 +1,11 @@
+import * as express from 'express';
+
+declare global {
+    namespace Express {
+        export interface Request {
+            userId: string | null
+            deviceId: string | null
+        }
+    }
+}
+export {};
