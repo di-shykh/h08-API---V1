@@ -170,8 +170,9 @@ describe("Sessions tests", () => {
 
         expect(result.body).toHaveLength(3);
 
-       const del =result.body.find((item: SessionOutput) => item.deviceId === deviceId);
-       expect(del).toBeUndefined();
+        expect(result.body).not.toContainEqual(
+            expect.objectContaining({ deviceId: deviceId })
+        );
     })
     it("Shouldn't delete device 2 with not valid refresh token(401), DELETE /hometask_09/api/security/devices/{deviceId}", async () => {
         const testUser2 = await createUser(app, {
@@ -276,15 +277,102 @@ describe("Sessions tests", () => {
         expect(response2.body).toHaveLength(4);
     })
     // Делаем logout девайсом 3. Запрашиваем список девайсов (девайсом 1).  В списке не должно быть девайса 3;
-    it("should logout device POST /hometask_09/api/auth/logout", async () => {
+    it("should logout device, POST /hometask_09/api/auth/logout", async () => {
         refreshTokens = await setupUserWithSessions();
-        const response =  await request(app)
+        const initialResponse =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[2]}`])
+            .expect(HttpStatus.Ok);
+
+        expect(initialResponse.body).toHaveLength(4);
+
+        const deviceId  = initialResponse.body[2].deviceId;
+
+        const logoutDeviceResult = await request(app)
+            .post(`${AUTH_PATH}/logout`)
+            .set('Cookie', [`refreshToken=${refreshTokens[2]}`])
+            .expect(HttpStatus.NoContent);
+
+        const result = await request(app)
             .get(`${SECURITY_PATH}/devices`)
             .set('Cookie', [`refreshToken=${refreshTokens[0]}`])
             .expect(HttpStatus.Ok);
 
-        expect(response.body).toHaveLength(4);
+        expect(result.body).toHaveLength(3);
+        expect(result.body).not.toContainEqual(
+            expect.objectContaining({ deviceId: deviceId })
+        );
+    })
+    it("shouldn't logout user with expired token(401), POST /hometask_09/api/auth/logout", async () => {
+        refreshTokens = await setupUserWithSessions();
+        const initialResponse =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[2]}`])
+            .expect(HttpStatus.Ok);
 
+        expect(initialResponse.body).toHaveLength(4);
 
+        const userIdExpired = initialResponse.body[1].id;
+        const expiredToken = createExpiredToken(userIdExpired);
+
+        const logoutDeviceResult = await request(app)
+            .post(`${AUTH_PATH}/logout`)
+            .set('Cookie', [`refreshToken=${expiredToken}`])
+            .expect(HttpStatus.Unauthorized);
+        const result = await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[2]}`])
+            .expect(HttpStatus.Ok);
+        expect(initialResponse.body).toHaveLength(4);
+        expect(result.body).not.toContainEqual(
+            expect.objectContaining({ deviceId: userIdExpired })
+        );
+    })
+    it("should terminate all  other(exclude current) devices sessions,DELETE /hometask_09/api/security/devices", async () => {
+        refreshTokens = await setupUserWithSessions();
+        const initialResponse =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[0]}`])
+            .expect(HttpStatus.Ok);
+
+        expect(initialResponse.body).toHaveLength(4);
+
+        const userId= initialResponse.body[0].id;
+        const response = await request(app)
+            .delete(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[0]}`])
+            .expect(HttpStatus.NoContent);
+
+        const result =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[0]}`])
+            .expect(HttpStatus.Ok);
+
+        expect(result.body).toHaveLength(1);
+        expect(result.body[0].id).toEqual(userId);
+    })
+    it("shouldn't terminate all  other(exclude current) devices sessions with expired token(401),DELETE /hometask_09/api/security/devices", async () => {
+        refreshTokens = await setupUserWithSessions();
+        const initialResponse =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[0]}`])
+            .expect(HttpStatus.Ok);
+
+        expect(initialResponse.body).toHaveLength(4);
+
+        const userId= initialResponse.body[0].id;
+        const expiredToken = createExpiredToken(userId);
+        const response = await request(app)
+            .delete(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${expiredToken}`])
+            .expect(HttpStatus.Unauthorized);
+
+        const result =  await request(app)
+            .get(`${SECURITY_PATH}/devices`)
+            .set('Cookie', [`refreshToken=${refreshTokens[1]}`])
+            .expect(HttpStatus.Ok);
+
+        expect(result.body).toHaveLength(4);
+        expect(result.body[0].id).toEqual(userId);
     })
 })
