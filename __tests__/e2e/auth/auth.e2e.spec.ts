@@ -7,10 +7,11 @@ import {clearDb} from "../../utils/clear-db";
 import {getUserDto} from "../../utils/users/get-user-dto";
 import {createUser} from "../../utils/users/create-user";
 import request from "supertest";
-import {AUTH_PATH} from "../../../src/core/paths/paths";
+import {AUTH_PATH, SECURITY_PATH} from "../../../src/core/paths/paths";
 import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {getCookiesString, hasCookieWithName, validateRefreshTokenCookie} from "../../utils/cookies.helpers";
 import jwt from 'jsonwebtoken';
+import {describe} from "node:test";
 
 const TEST_USER = {
     LOGIN: 'TestUser',
@@ -23,7 +24,7 @@ const TEST_USER_2 = {
     EMAIL: 'anna@email.com'
 }
 // Хелпер для логина
-const loginUser = async (
+export const loginUser = async (
     app: Express,
     credentials: {loginOrEmail: string, password: string}
 ): Promise<{accessToken: string; refreshTokenCookie: string}> => {
@@ -86,6 +87,17 @@ export const createExpiredAccessToken = (userId: string): string => {
         { algorithm: 'HS256' }
     );
 };
+export const createExpiredToken = (userId:string, deviceId = 'test-device')=> {
+    return jwt.sign(
+        {
+            userId,
+            deviceId,
+            iat: Math.floor(Date.now() / 1000) - 3600 // issued 1 hour ago
+        },
+        process.env.JWT_ACCESS_SECRET || 'test-secret',
+        { expiresIn: '-1h' } // Минус 1 час - уже истек
+    );
+}
 
 describe("Check Auth: POST /auth/login", () => {
     const app: Express = express();
@@ -302,4 +314,5 @@ describe("Check Auth: POST /auth/login", () => {
         });
     });
 });
+
 
