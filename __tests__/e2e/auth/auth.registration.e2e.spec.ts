@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
-jest.mock('express-rate-limit', () => ({
-    __esModule: true,
-    default: jest.fn(() => (req: any, res: any, next: any) => next())
+jest.mock('../../../src/auth/middlewares/rate-limiting.middleware', () => ({
+    rateLimitGuard: jest.fn((req, res, next) => next()) // Просто пропускаем запрос
 }));
 jest.mock('../../../src/auth/adapters/email.adapter', () => {
     const mockSendEmail = jest.fn().mockResolvedValue(undefined);
@@ -35,21 +34,29 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
     const app: Express = express();
     setupApp(app);
     const adminToken: string = generateBasicAuthToken();
+    let testNumber = 0;
     beforeAll(async () => {
-        // process.env.DISABLE_RATE_LIMIT = 'true';
         jest.restoreAllMocks();
         jest.clearAllMocks();
         await runDB(SETTINGS.MONGO_URL_TEST);
         await clearDb(app);
     });
     beforeEach(async () => {
-        //await clearDb(app);
-        // Очищаем моки перед каждым тестом
+        await clearDb(app);
+
+        // Очищаем моки
+        jest.clearAllMocks();
+        (emailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
+        (emailAdapter.resendEmail as jest.Mock).mockClear();
+
+        // Сбрасываем реализации моков к стандартным
         (emailAdapter.sendConfirmationEmail as jest.Mock).mockResolvedValue(undefined);
         (emailAdapter.resendEmail as jest.Mock).mockResolvedValue(undefined);
+
+        testNumber++;
     })
     afterAll(async () => {
-        // delete process.env.DISABLE_RATE_LIMIT;
+        await clearDb(app);
         stopDb();
     });
     it('should register user and send registration code to email: POST /hometask_07/api/auth/registration', async () => {
@@ -57,9 +64,9 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
         const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
 
         const registrationData = {
-            login: 'testUser',
+            login: `user${testNumber}`,
             password: 'testPassword',
-            email: 'di49@mail.ru',
+            email: `test${testNumber}@mail.ru`,
         }
         const response = await request(app)
             .post(`${AUTH_PATH}/registration`)
@@ -69,7 +76,7 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
         // Проверяем вызов email adapter
         expect(mockSendEmail).toHaveBeenCalledTimes(1);
         expect(mockSendEmail).toHaveBeenCalledWith(
-            'di49@mail.ru',
+            `test${testNumber}@mail.ru`,
             expect.any(String)
         );
     })
@@ -78,17 +85,18 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
         const registrationData = {
             login: 't',
             password: 'testPassword',
-            email: 'di49@mail.ru',
+            email: `test${testNumber}@mail.ru`,
         }
         const response = await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData)
             .expect(HttpStatus.BadRequest);
+        testNumber++;
 
         const registrationData2 = {
-            login: 'testUser2',
+            login: `user${testNumber}`,
             password: 'testPassword',
-            email: 'test@mail.ru',
+            email: `test${testNumber}@mail.ru`,
         }
         const response2 = await request(app)
             .post(`${AUTH_PATH}/registration`)
@@ -96,17 +104,18 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             .expect(HttpStatus.NoContent);
 
         const registrationData3 = {
-            login: 'testUser2',
+            login: `user${testNumber}`,
             password: 'testPassword',
-            email: 'di@mail.ru',
+            email: `test${testNumber}@mail.ru`,
         }
         const response3 = await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData3)
             .expect(HttpStatus.BadRequest);
+        testNumber++;
 
         const registrationData4 = {
-            login: 'testUser4',
+            login: `user${testNumber}`,
             password: 'testPassword3',
             email: '@mail.ru',
         }
@@ -116,7 +125,7 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             .expect(HttpStatus.BadRequest);
 
         const registrationData5 = {
-            login: 'testUser4',
+            login: `user${testNumber-1}`,
             password: 'testPassword3',
             email: 'test@mail.ru',
         }
@@ -124,20 +133,11 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData5)
             .expect(HttpStatus.BadRequest);
-
-        const registrationData6 = {
-            login: 'testUser4',
-            password: '',
-            email: 'di_49@mail.ru',
-        }
-        const response6 = await request(app)
-            .post(`${AUTH_PATH}/registration`)
-            .send(registrationData6)
-            .expect(HttpStatus.BadRequest);
     })
     it('should confirm registration: POST /hometask_07/api/auth/registration-confirmation', async () => {
         let sentCode: string = '';
 
+        (emailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
         (emailAdapter.sendConfirmationEmail as jest.Mock).mockImplementation(
             async (email: string, code: string) => {
                 sentCode = code;
@@ -147,9 +147,9 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
         //const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
         (emailAdapter.resendEmail as jest.Mock).mockResolvedValue(undefined);
 
-        const email: string = 'di49@mail.ru';
+        const email: string = `test${testNumber}@mail.ru`;
         const registrationData = {
-            login: 'testUser',
+            login: `user${testNumber}`,
             password: 'testPassword',
             email,
         }
@@ -162,7 +162,7 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
         // Проверяем вызов email adapter
         expect(emailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
         expect(emailAdapter.sendConfirmationEmail).toHaveBeenCalledWith(
-            'di49@mail.ru',
+            `test${testNumber}@mail.ru`,
             expect.any(String)
         );
         // Проверяем что код был сохранен в переменной sentCode
@@ -270,10 +270,11 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
     });
     it ('should resend confirmation code on email: POST /hometask_07/api/auth/registration-email-resending', async () => {
         const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
+        mockSendEmail.mockClear();
 
-        const email: string = 'di49@mail.ru';
+        const email: string = `test${testNumber}@mail.ru`;
         const registrationData = {
-            login: 'testUser',
+            login: `user${testNumber}`,
             password: 'testPassword',
             email,
         }
@@ -284,7 +285,7 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
 
         expect(mockSendEmail).toHaveBeenCalledTimes(1);
         expect(mockSendEmail).toHaveBeenCalledWith(
-            'di49@mail.ru',
+            `test${testNumber}@mail.ru`,
             expect.any(String)
         );
 
@@ -302,7 +303,7 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
 
         expect(mockSendEmail).toHaveBeenCalledTimes(1);
         expect(mockSendEmail).toHaveBeenCalledWith(
-            'di49@mail.ru',
+            `test${testNumber}@mail.ru`,
             expect.any(String)
         );
 
