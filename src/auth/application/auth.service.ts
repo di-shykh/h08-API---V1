@@ -13,8 +13,8 @@ import {normalizeEmail} from "../../core/helpers/normolize-email";
 import {Session} from "../../securityDevices/domain/session";
 import {sessionRepository} from "../../securityDevices/repositories/session.repository";
 
-export const authService = {
-    async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
+export class authService {
+    static async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
         const user: WithId<UserDB>|null = await usersRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await bcryptService.checkPassword(password, user.passwordHash);
@@ -37,8 +37,8 @@ export const authService = {
         const sessionId = await sessionRepository.createSession(session);
         if (!sessionId) return null;
         return {accessToken, refreshToken};
-    },
-    async createUser(userInputDto: UserCreateInput): Promise<Result<string|null>> {
+    }
+    static async createUser(userInputDto: UserCreateInput): Promise<Result<string|null>> {
 
         const {login, email, password} = userInputDto;
         const normalizedEmail = normalizeEmail(email);
@@ -74,8 +74,8 @@ export const authService = {
                await usersRepository.deleteUser(newUserId);
                return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
             }
-    },
-    async confirmUserRegistration(code: string): Promise<Result<boolean|null>> {
+    }
+    static async confirmUserRegistration(code: string): Promise<Result<boolean|null>> {
         if (!code || code.length !== 36) { // UUID v4 имеет 36 символов
             return ResultObject.BadRequest('code', 'Invalid confirmation code format');
         }
@@ -96,8 +96,8 @@ export const authService = {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
         return ResultObject.Success(result);
-    },
-    async resendEmail(email: string): Promise<Result<boolean|null>> {
+    }
+    static async resendEmail(email: string): Promise<Result<boolean|null>> {
         const user: WithId<UserDB>|null = await usersRepository.findUserByEmail(email);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('email', 'User with this email is not exists');
@@ -115,5 +115,5 @@ export const authService = {
         } catch (e) {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
-    },
+    }
 }

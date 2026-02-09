@@ -11,7 +11,6 @@ import {AUTH_PATH, SECURITY_PATH} from "../../../src/core/paths/paths";
 import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {getCookiesString, hasCookieWithName, validateRefreshTokenCookie} from "../../utils/cookies.helpers";
 import jwt from 'jsonwebtoken';
-import {describe} from "node:test";
 
 const TEST_USER = {
     LOGIN: 'TestUser',

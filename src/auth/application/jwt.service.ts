@@ -1,7 +1,7 @@
 import jwt, {JwtPayload} from 'jsonwebtoken';
 
-export const jwtService ={
-    async   createToken (userId: string, deviceId:string): Promise<{
+export class jwtService {
+    static async   createToken (userId: string, deviceId:string): Promise<{
         accessToken: string;
         refreshToken: string;
     }> {
@@ -12,16 +12,16 @@ export const jwtService ={
         const accessToken: string = jwt.sign({ userId, type: 'access', iat: Date.now()  }, secret, { expiresIn: '10s' });
         const refreshToken: string = jwt.sign({ userId, deviceId, type: 'refresh', iat: Date.now()  }, secret, { expiresIn: '20s' });
         return { accessToken, refreshToken };
-    },
-    async verifyToken(token: string): Promise<{ userId: string }|null> {
+    }
+    static async verifyToken(token: string): Promise<{ userId: string }|null> {
         try {
             return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
         } catch (e) {
             console.error("Can't verify token",e);
             return null;
         }
-    },
-    async verifyTokenFull(token: string): Promise<JwtPayload & { userId: string } | null> {
+    }
+    static async verifyTokenFull(token: string): Promise<JwtPayload & { userId: string } | null> {
         try {
             return jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
         } catch (e) {
