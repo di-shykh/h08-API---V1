@@ -3,18 +3,18 @@ import {Session} from "../domain/session";
 import {WithId} from "mongodb";
 import {SessionOutput} from "../routes/output/session-output";
 
-export const sessionQueryRepository = {
-    async getSession(deviceId: string, userId: string): Promise<WithId<Session>|null> {
+export class sessionQueryRepository {
+    static async getSession(deviceId: string, userId: string): Promise<WithId<Session>|null> {
         const session = await sessionCollection.findOne({deviceId, userId});
         if (!session) {
             return null;
         }
         return session;
-    },
-    async getSessionsByUserId(userId: string): Promise<WithId<Session>[]|null> {
+    }
+    static async getSessionsByUserId(userId: string): Promise<WithId<Session>[]|null> {
         return await sessionCollection.find({userId}).toArray();
-    },
-    async mapToSessionOutput(sessions: WithId<Session>[]): Promise<SessionOutput[]|null> {
+    }
+    static async mapToSessionOutput(sessions: WithId<Session>[]): Promise<SessionOutput[]|null> {
         if (!sessions || sessions.length===0) {
             return null;
         }

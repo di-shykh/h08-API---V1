@@ -9,8 +9,8 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASSWORD,
     },
 });
-export const emailAdapter = {
-    async sendConfirmationEmail(email: string, confirmationCode: string): Promise<void> {
+export class emailAdapter {
+    static async sendConfirmationEmail(email: string, confirmationCode: string): Promise<void> {
         try{
             const info = await transporter.sendMail({
                 from: `"Diana Shykh homework 07" <${process.env.EMAIL_USER}>`,
@@ -28,8 +28,8 @@ export const emailAdapter = {
             throw new Error('Не удалось отправить email');
         }
 
-    },
-    async resendEmail(email: string, confirmationCode: string): Promise<void> {
+    }
+    static async resendEmail(email: string, confirmationCode: string): Promise<void> {
         try{
             const info = await transporter.sendMail({
                 from: `"Diana Shykh homework 07" <${process.env.EMAIL_USER}>`,

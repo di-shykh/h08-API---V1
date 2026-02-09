@@ -5,8 +5,8 @@ import {DeleteResult, UpdateResult, WithId} from "mongodb";
 import {ResultStatus} from "../../core/result/result.code";
 import {Result, ResultObject} from "../../core/result/result.type";
 
-export const securityService = {
-    async refreshToken(session: WithId<Session>): Promise<Result<{
+export class securityService {
+    static async refreshToken(session: WithId<Session>): Promise<Result<{
         accessToken: string;
         refreshToken: string;
     } | null>> {
@@ -27,15 +27,15 @@ export const securityService = {
            return ResultObject.Unauthorized();
        }
        return ResultObject.Success(tokenResult);
-    },
-    async deleteSession(id: string): Promise<Result> {
+    }
+    static async deleteSession(id: string): Promise<Result> {
        const result: DeleteResult = await sessionRepository.deleteSession(id);
        if (result.deletedCount<1) {
            return ResultObject.Unauthorized();
        }
        return ResultObject.NoContent();
-    },
-    async deleteSessionByDeviceId(deviceId: string, userId:string): Promise<Result> {
+    }
+    static async deleteSessionByDeviceId(deviceId: string, userId:string): Promise<Result> {
         const session = await sessionRepository.findByDeviceId(deviceId);
         if (!session) {
             return ResultObject.NotFound("deviceId", "Session for this device does not exist");
@@ -48,8 +48,8 @@ export const securityService = {
             return ResultObject.NotFound("deviceId", "Session for this device does not exist");
         }
         return ResultObject.NoContent();
-    },
-    async deleteSessionList(userId:string, deviceId: string): Promise<Result> {
+    }
+    static async deleteSessionList(userId:string, deviceId: string): Promise<Result> {
         const result = await sessionRepository.deleteSessionList(userId, deviceId);
         if(result.deletedCount<1) {
             return ResultObject.NotFound("userId", "Session for this user does not exist");

@@ -35,35 +35,36 @@ authRouter
     .get(
         "/me",
         AccessTokenGuard,
-        authGetHandler
+        AuthController.me
     )
     .post(
         "/registration",
         rateLimitGuard,
         userCreateValidation,
         inputValidationResultMiddleware,
-        registrationHandler)
+        AuthController.registration
+    )
     .post(
         "/registration-confirmation",
         rateLimitGuard,
         codeConfirmationValidation,
         inputValidationResultMiddleware,
-        registrationConfirmationHandler
+        AuthController.registrationConfirmation
     )
     .post(
         "/registration-email-resending",
         rateLimitGuard,
         emailValidation,
         inputValidationResultMiddleware,
-        registrationEmailResendingHandler
+        AuthController.registrationEmailResending
     )
     .post(
         "/refresh-token",
         RefreshTokenGuard,
-        refreshTokenHandler
+        AuthController.refreshToken
     )
     .post(
         "/logout",
         RefreshTokenGuard,
-        logoutHandler
+        AuthController.logout
     )
