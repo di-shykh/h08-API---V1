@@ -18,6 +18,7 @@ import rateLimit from "express-rate-limit";
 import {refreshTokenHandler} from "./handlers/refresh-token.handler";
 import {RefreshTokenGuard} from "../middlewares/refresh.token.guard"
 import {logoutHandler} from "./handlers/logout.handler";
+import {AuthController} from "./auth.controller";
 
 
 export const authRouter: Router = Router({});
@@ -29,7 +30,7 @@ authRouter
         passwordValidation,
         loginOrEmailValidation,
         inputValidationResultMiddleware,
-        authHandler
+        AuthController.login
     )
     .get(
         "/me",
