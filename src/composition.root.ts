@@ -7,15 +7,23 @@ import {SecurityService} from "./securityDevices/application/security.services";
 import {SessionQueryRepository} from "./securityDevices/repositories/session.query-repository";
 import {SessionRepository} from "./securityDevices/repositories/session.repository";
 import {SecurityController} from "./securityDevices/routes/security.controller";
+import {UsersService} from "./users/application/user.services";
+import {UsersQueryRepository} from "./users/repositories/user.query-repository";
+import {UsersRepository} from "./users/repositories/user.repository";
+import {UserController} from "./users/routes/user.controller";
 
 export const bcryptService = new BcryptService();
 export const emailAdapter = new EmailAdapter();
 export const jwtService = new JwtService();
 export const sessionRepository = new SessionRepository();
 export const sessionQueryRepository = new SessionQueryRepository();
-export const authService = new AuthService(bcryptService,jwtService,emailAdapter);
+export const usersQueryRepository = new UsersQueryRepository();
+export const usersRepository = new UsersRepository();
+export const authService = new AuthService(bcryptService,jwtService,emailAdapter,sessionRepository,usersRepository,);
 
 export const authController = new AuthController(authService,jwtService);
 export const securityService = new SecurityService(jwtService, sessionRepository);
 
 export const securityController = new SecurityController(sessionQueryRepository,securityService);
+export const usersService = new UsersService(bcryptService, usersRepository);
+export const userController = new UserController(usersQueryRepository, usersService);

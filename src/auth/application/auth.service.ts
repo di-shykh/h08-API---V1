@@ -1,4 +1,3 @@
-import {usersRepository} from "../../users/repositories/user.repository";
 import {WithId} from "mongodb";
 import {UserDB} from "../../users/routes/output/user.db";
 import { v4 as uuidv4 } from 'uuid';
@@ -7,28 +6,34 @@ import {UserCreateInput} from "../../users/routes/input/create-user.input";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import {Session} from "../../securityDevices/domain/session";
-import {sessionRepository} from "../../securityDevices/repositories/session.repository";
 import {EmailAdapter} from "../adapters/email.adapter";
 import {BcryptService} from "../adapters/bcrypt.service";
 import {JwtService} from "./jwt.service";
+import {SessionRepository} from "../../securityDevices/repositories/session.repository";
+import {UsersRepository} from "../../users/repositories/user.repository";
 
 export class AuthService {
     bcryptService: BcryptService;
     jwtService: JwtService;
     emailAdapter: EmailAdapter;
-
+    sessionRepository: SessionRepository;
+    usersRepository: UsersRepository;
     constructor(
         bcryptService: BcryptService,
         jwtService: JwtService,
-        emailAdapter: EmailAdapter
+        emailAdapter: EmailAdapter,
+        sessionRepository: SessionRepository,
+        usersRepository: UsersRepository,
     ) {
         this.bcryptService = bcryptService;
         this.jwtService = jwtService;
         this.emailAdapter = emailAdapter;
+        this.sessionRepository = sessionRepository;
+        this.usersRepository = usersRepository;
     }
 
     async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
-        const user: WithId<UserDB>|null = await usersRepository.findByLoginOrEmail(loginOrEmail);
+        const user: WithId<UserDB>|null = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await this.bcryptService.checkPassword(password, user.passwordHash);
         if (!result) return null;
@@ -47,7 +52,7 @@ export class AuthService {
             iat: new Date(iat*1000),
             exp: new Date(Date.now()+20000),
         };
-        const sessionId = await sessionRepository.createSession(session);
+        const sessionId = await this.sessionRepository.createSession(session);
         if (!sessionId) return null;
         return {accessToken, refreshToken};
     }
@@ -55,12 +60,12 @@ export class AuthService {
 
         const {login, email, password} = userInputDto;
         const normalizedEmail = normalizeEmail(email);
-        const isLoginUnique = await usersRepository.isLoginUnique(login);
+        const isLoginUnique = await this.usersRepository.isLoginUnique(login);
         if (!isLoginUnique) {
           return   ResultObject.BadRequest('login', 'Login already exists');
         }
 
-        const isEmailUnique = await usersRepository.isEmailUnique(normalizedEmail);
+        const isEmailUnique = await this.usersRepository.isEmailUnique(normalizedEmail);
         if (!isEmailUnique) {
            return  ResultObject.BadRequest('email', 'Email already exists');
         }
@@ -79,12 +84,12 @@ export class AuthService {
                 expirationDate: expirationDate,
             }
         }
-        const newUserId = await usersRepository.createUser(newUser);
+        const newUserId = await this.usersRepository.createUser(newUser);
         try{
             await this.emailAdapter.sendConfirmationEmail(email, confirmationCode);
             return ResultObject.Success(newUserId);
         } catch(err){
-               await usersRepository.deleteUser(newUserId);
+               await this.usersRepository.deleteUser(newUserId);
                return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
             }
     }
@@ -92,7 +97,7 @@ export class AuthService {
         if (!code || code.length !== 36) { // UUID v4 имеет 36 символов
             return ResultObject.BadRequest('code', 'Invalid confirmation code format');
         }
-        const user: WithId<UserDB>|null = await usersRepository.findByConfirmationCode(code);
+        const user: WithId<UserDB>|null = await this.usersRepository.findByConfirmationCode(code);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('code', 'Code does not exist');
         }
@@ -104,14 +109,14 @@ export class AuthService {
         if(isAfter(dateNow,expirationDate)){
             return ResultObject.BadRequest('code', 'Code expired');
         }
-        const result = await usersRepository.confirmEmail(code);
+        const result = await this.usersRepository.confirmEmail(code);
         if(!result){
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
         return ResultObject.Success(result);
     }
     async resendEmail(email: string): Promise<Result<boolean|null>> {
-        const user: WithId<UserDB>|null = await usersRepository.findUserByEmail(email);
+        const user: WithId<UserDB>|null = await this.usersRepository.findUserByEmail(email);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('email', 'User with this email is not exists');
         }
@@ -123,7 +128,7 @@ export class AuthService {
 
         try{
             await this.emailAdapter.resendEmail(email,confirmationCode);
-           const result = await usersRepository.updateUserEmailConfirmation(user._id, confirmationCode, expirationDate);
+           const result = await this.usersRepository.updateUserEmailConfirmation(user._id, confirmationCode, expirationDate);
             return ResultObject.Success(result);
         } catch (e) {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');

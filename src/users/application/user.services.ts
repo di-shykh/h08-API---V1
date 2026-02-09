@@ -1,22 +1,32 @@
 import {UserCreateInput} from "../routes/input/create-user.input";
-import {usersQueryRepository} from "../repositories/user.query-repository";
-import {bcryptService} from "../../auth/adapters/bcrypt.service";
 import {UserDB} from "../routes/output/user.db";
-import {usersRepository} from "../repositories/user.repository";
 import {DuplicateFieldError} from "../../core/errors/duplicateField.error";
+import {BcryptService} from "../../auth/adapters/bcrypt.service";
+import {UsersRepository} from "../repositories/user.repository";
 
-export const usersService = {
+export class UsersService {
+    bcryptService: BcryptService;
+    usersRepository: UsersRepository;
+
+    constructor(
+        bcryptService: BcryptService,
+        usersRepository: UsersRepository,
+    ) {
+        this.bcryptService = bcryptService;
+        this.usersRepository = usersRepository;
+    }
+
     async createUser(userInputDto: UserCreateInput): Promise<string> {
         const {login, email, password} = userInputDto;
-        const isLoginUnique = await usersQueryRepository.isLoginUnique(login);
+        const isLoginUnique = await this.usersRepository.isLoginUnique(login);
         if (!isLoginUnique) {
             throw new DuplicateFieldError("login");
         }
-        const isEmailUnique = await usersQueryRepository.isEmailUnique(email);
+        const isEmailUnique = await this.usersRepository.isEmailUnique(email);
         if (!isEmailUnique) {
             throw new DuplicateFieldError("email");
         }
-        const passwordHash: string = await bcryptService.generateHash(password);
+        const passwordHash: string = await this.bcryptService.generateHash(password);
 
         const newUser: UserDB = {
             login,
@@ -24,11 +34,10 @@ export const usersService = {
             passwordHash,
             createdAt: new Date().toISOString(),
         }
-        const newUserId = await usersRepository.createUser(newUser);
+        const newUserId = await this.usersRepository.createUser(newUser);
         return newUserId;
-    },
-    async deleteUser(id: string): Promise<void> {
-        await usersRepository.deleteUser(id);
     }
-
+    async deleteUser(id: string): Promise<void> {
+        await this.usersRepository.deleteUser(id);
+    }
 }
