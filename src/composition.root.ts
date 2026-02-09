@@ -21,8 +21,8 @@ export const usersQueryRepository = new UsersQueryRepository();
 export const usersRepository = new UsersRepository();
 export const authService = new AuthService(bcryptService,jwtService,emailAdapter,sessionRepository,usersRepository,);
 
-export const authController = new AuthController(authService,jwtService);
 export const securityService = new SecurityService(jwtService, sessionRepository);
+export const authController = new AuthController(authService,jwtService, securityService, sessionQueryRepository,usersQueryRepository);
 
 export const securityController = new SecurityController(sessionQueryRepository,securityService);
 export const usersService = new UsersService(bcryptService, usersRepository);

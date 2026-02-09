@@ -2,24 +2,30 @@ import {HttpStatus} from "../../core/types/http-statuses";
 import {Request, Response} from "express";
 import {WithId} from "mongodb";
 import {User} from "../../users/domain/user";
-import {usersQueryRepository} from "../../users/repositories/user.query-repository";
 import {UserOutput} from "../../users/routes/output/user-output";
 import {errorHandler} from "../../core/errors/error.handler";
 import {Result} from "../../core/result/result.type";
 import {ResultStatus} from "../../core/result/result.code";
 import {resultCodeToHttpException} from "../../core/result/resultCodeToHttpExeptions";
-import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
-import {securityService} from "../../securityDevices/application/security.services";
 import {AuthService} from "../application/auth.service";
 import {JwtService} from "../application/jwt.service";
+import {SecurityService} from "../../securityDevices/application/security.services";
+import {SessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
+import {UsersQueryRepository} from "../../users/repositories/user.query-repository";
 
 export class AuthController {
     authService: AuthService;
     jwtService: JwtService;
+    securityService: SecurityService;
+    sessionQueryRepository: SessionQueryRepository;
+    usersQueryRepository: UsersQueryRepository;
 
-    constructor(authService: AuthService, jwtService: JwtService) {
+    constructor(authService: AuthService, jwtService: JwtService, securityService: SecurityService, sessionQueryRepository: SessionQueryRepository, usersQueryRepository: UsersQueryRepository) {
         this.authService = authService;
         this.jwtService = jwtService;
+        this.securityService = securityService;
+        this.sessionQueryRepository = sessionQueryRepository;
+        this.usersQueryRepository = usersQueryRepository;
     }
   async  login(req: Request, res: Response) {
       const {loginOrEmail, password} = req.body;
@@ -49,8 +55,8 @@ export class AuthController {
               return res.sendStatus(HttpStatus.Unauthorized);
           }
           const userId: string = req.userId;
-          const user: WithId<User> = await usersQueryRepository.findUserByIdOrFail(userId);
-          const userOutput: UserOutput = await usersQueryRepository.mapToUserOutput(user);
+          const user: WithId<User> = await this.usersQueryRepository.findUserByIdOrFail(userId);
+          const userOutput: UserOutput = await this.usersQueryRepository.mapToUserOutput(user);
           const {id,createdAt, ...userWithoutCreatedAt} = userOutput;
           const responseData = {
               ...userWithoutCreatedAt,
@@ -137,7 +143,7 @@ export class AuthController {
                   errorsMessages: [{ message: 'Refresh token is not valid' }]
               });
           }
-          const session = await sessionQueryRepository.getSession(deviceId, decodedPayload.userId);
+          const session = await this.sessionQueryRepository.getSession(deviceId, decodedPayload.userId);
           if (!session) {
               return res.status(HttpStatus.Unauthorized).json({
                   errorsMessages: [{ message: 'Refresh token is not valid' }]
@@ -149,7 +155,7 @@ export class AuthController {
                   errorsMessages: [{message: 'Refresh token is no longer valid (was already refreshed)'}]
               });
           }
-          const tokenResult = await securityService.refreshToken(session);
+          const tokenResult = await this.securityService.refreshToken(session);
           if(!tokenResult){
               return res.status(HttpStatus.Unauthorized).json({
                   errorsMessages: [{ message: 'Refresh token is not valid' }]
@@ -188,7 +194,7 @@ export class AuthController {
           if (!decodedPayload||!decodedPayload.userId||!decodedPayload.iat) {
               return res.sendStatus(HttpStatus.Unauthorized);
           }
-          const session = await sessionQueryRepository.getSession(decodedPayload.deviceId,decodedPayload.userId)
+          const session = await this.sessionQueryRepository.getSession(decodedPayload.deviceId,decodedPayload.userId)
           if (!session) {
               return res.sendStatus(HttpStatus.Unauthorized);
           }
@@ -198,7 +204,7 @@ export class AuthController {
                   errorsMessages: [{message: 'Refresh token is no longer valid (was already refreshed)'}]
               });
           }
-          const result = await securityService.deleteSession(session._id.toString());
+          const result = await this.securityService.deleteSession(session._id.toString());
           res.clearCookie('refreshToken', {
               httpOnly: true,
               secure: true,

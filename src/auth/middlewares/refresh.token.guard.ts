@@ -1,8 +1,8 @@
 import {NextFunction, Request, Response} from "express";
 import {HttpStatus} from "../../core/types/http-statuses";
-import {jwtService} from "../application/jwt.service";
+import {jwtService} from "../../composition.root";
 import {errorHandler} from "../../core/errors/error.handler";
-import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
+import {sessionQueryRepository} from "../../composition.root";
 
 export const RefreshTokenGuard = async (req: Request, res: Response, next: NextFunction) => {
    try{
