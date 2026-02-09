@@ -22,7 +22,7 @@ export const blogsService = {
        return;
     },
     async delete(id: string): Promise<void> {
-        const postsWithBlogId = await postsQueryRepository.findPostsByBlogId(id);
+        const postsWithBlogId = await postsRepository.findPostsByBlogId(id);
         if(postsWithBlogId && postsWithBlogId.totalCount > 0){
             await Promise.all(postsWithBlogId.items.map( (post: WithId<Post>) => {
                 postsRepository.deletePost(post._id.toString())

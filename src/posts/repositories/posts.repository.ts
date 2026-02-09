@@ -1,8 +1,9 @@
 import {Post} from "../domain/post";
 import {PostInputDto} from "../application/dtos/post.input-dto";
 import {postCollection} from "../../db/mongo.bd";
-import {ObjectId} from "mongodb";
+import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
+import {PostQueryInput} from "../routes/input/post-query.input";
 
 export const postsRepository = {
 
@@ -33,6 +34,37 @@ export const postsRepository = {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return;
+    },
+    async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
+        const filter: any = {'blogId': blogId};
+        let items: WithId<Post>[];
+        if(queryDto) {
+            const {
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDirection,
+            } = queryDto;
+            const skip = (pageNumber - 1) * pageSize;
+            items = await postCollection
+                .find(filter)
+                .sort({[sortBy]: sortDirection})
+                .skip(skip)
+                .limit(pageSize)
+                .toArray();
+        }
+        else {
+            items = await postCollection.find(filter).toArray();
+        }
+        const totalCount = await postCollection.countDocuments(filter);
+        return {items, totalCount};
+    },
+    async findPostByIdOrFail(id: string): Promise<WithId<Post>> {
+        const result = await postCollection.findOne({_id: new ObjectId(id)});
+        if (!result) {
+            throw new RepositoryNotFoundError("Post not found.");
+        }
+        return result;
     },
 }
 

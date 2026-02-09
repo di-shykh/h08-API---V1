@@ -2,10 +2,11 @@ import {postsRepository} from "../repositories/posts.repository";
 import {PostAttributes} from "./dtos/post-attributs";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {blogsQueryRepository} from "../../blogs/repositories/blogs.query-repository";
+import {blogsRepository} from "../../blogs/repositories/blogs.repository";
 
 export const postsService = {
     async createPost(dto: PostAttributes): Promise<string> {
-        const blog = await blogsQueryRepository.findBlogByIdOrFail(dto.blogId);
+        const blog = await blogsRepository.findBlogByIdOrFail(dto.blogId);
         if(!blog){
             throw new RepositoryNotFoundError("Blog does not exist");
         }

@@ -10,25 +10,25 @@ import {UserDB} from "../routes/output/user.db";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 
 
-export const usersQueryRepository = {
-    async findUserByIdOrFail(id: string): Promise<WithId<User>> {
+export class usersQueryRepository {
+    static async findUserByIdOrFail(id: string): Promise<WithId<User>> {
         const user = await userCollection.findOne({_id: new ObjectId(id)});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
         return user;
-    },
-    async isEmailUnique(email: string): Promise<Boolean> {
+    }
+    static async isEmailUnique(email: string): Promise<Boolean> {
         const normalizedEmail = normalizeEmail(email);
         const user = await userCollection.findOne({email: normalizedEmail});
         return !user;
-    },
-    async isLoginUnique(login: string): Promise<Boolean> {
+    }
+    static async isLoginUnique(login: string): Promise<Boolean> {
         const loginUser = login.trim();
         const user = await userCollection.findOne({login: loginUser});
         return !user;
-    },
-    async findManyUsers(queryDto: UserQueryInput): Promise<{items: WithId<User>[], totalCount: number}> {
+    }
+    static async findManyUsers(queryDto: UserQueryInput): Promise<{items: WithId<User>[], totalCount: number}> {
         const {
             pageNumber,
             pageSize,
@@ -61,16 +61,16 @@ export const usersQueryRepository = {
             .toArray();
         const totalCount = await userCollection.countDocuments(filter);
         return {items, totalCount};
-    },
-    mapToUserOutput(user: WithId<User>): UserOutput {
+    }
+    static mapToUserOutput(user: WithId<User>): UserOutput {
         return {
             id: user._id.toString(),
             login: user.login,
             email: user.email,
             createdAt: user.createdAt,
         }
-    },
-    mapToUserListPaginatedOutput(
+    }
+    static mapToUserListPaginatedOutput(
         users: WithId<User>[],
         pageNumber: number,
         pageSize: number,
@@ -89,20 +89,20 @@ export const usersQueryRepository = {
                 }),
             ),
         }
-    },
-    async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
+    }
+    static async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
         const user: WithId<UserDB>|null = await userCollection.findOne({"emailConfirmation.confirmationCode": code});
         return user;
-    },
-    async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
+    }
+    static async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
         const normalizedEmail = normalizeEmail(email);
         const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
         return user;
-    },
-    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
+    }
+    static async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
         const normalizedEmail = normalizeEmail(loginOrEmail);
         return await userCollection.findOne({
             $or: [{login: loginOrEmail }, { email: normalizedEmail }],
         });
-    },
+    }
 }

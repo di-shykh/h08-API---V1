@@ -7,12 +7,6 @@ import {PostListPaginatedOutput} from "../routes/output/post-list-paginated.outp
 import {PostOutput} from "../routes/output/post-output";
 
 export const postsQueryRepository = {
-    async findAllPosts(): Promise<WithId<Post>[]> {
-        return postCollection.find().toArray();
-    },
-    async findPostById(id: string): Promise<WithId<Post> | null> {
-        return postCollection.findOne({_id: new ObjectId(id)})
-    },
     async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
         const filter: any = {'blogId': blogId};
         let items: WithId<Post>[];

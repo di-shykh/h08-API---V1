@@ -7,9 +7,6 @@ import {BlogListPaginatedOutput} from "../routes/output/blog-list-paginated.outp
 import {BlogOutput} from "../routes/output/blog.output";
 
 export const blogsQueryRepository = {
-    async findAllBlogs(): Promise<WithId<Blog>[]>{
-        return blogCollection.find().toArray();
-    },
     async findBlogById(id: string):Promise<WithId<Blog> | null> {
         return blogCollection.findOne({_id: new ObjectId(id)})
     },

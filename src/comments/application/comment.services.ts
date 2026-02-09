@@ -9,12 +9,13 @@ import {DeleteResult, UpdateResult, WithId} from "mongodb";
 import {CommentOutput} from "../routes/output/comment-output";
 import {Post} from "../../posts/domain/post";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
+import {postsRepository} from "../../posts/repositories/posts.repository";
 
 export const commentsService = {
     async createComment(postId: string, userId: string, dto: CommentInputDto): Promise<Result<CommentOutput|null>> {
         let post: WithId<Post> | null;
         try{
-            post = await postsQueryRepository.findPostByIdOrFail(postId);
+            post = await postsRepository.findPostByIdOrFail(postId);
         } catch (error) {
             // Если выброшено RepositoryNotFoundError - пост не найден
             if (error instanceof RepositoryNotFoundError) {
@@ -35,8 +36,8 @@ export const commentsService = {
             createdAt: new Date().toISOString(),
         }
         const createdCommentId: string = await commentsRepository.createComment(newComment);
-        const createdComment: WithId<CommentDB> = await commentsQueryRepository.findCommentById(createdCommentId);
-        const createdCommentOutput: CommentOutput = await commentsQueryRepository.mapToCommentOutput(createdComment);
+        const createdComment: WithId<CommentDB> = await commentsRepository.findCommentById(createdCommentId);
+        const createdCommentOutput: CommentOutput = await commentsRepository.mapToCommentOutput(createdComment);
         return ResultObject.Created(createdCommentOutput);
     },
     async updateComment(commentId: string, userId: string, dto: CommentInputDto): Promise<Result> {
@@ -62,7 +63,7 @@ export const commentsService = {
         return ResultObject.NoContent();
     },
     async checkUserId(userId: string, commentId: string): Promise<Result> {
-        const comment = await commentsQueryRepository.findCommentById(commentId);
+        const comment = await commentsRepository.findCommentById(commentId);
         if (!comment) {
             return ResultObject.NotFound('commentId', 'Comment with this Id is not exist');
         }

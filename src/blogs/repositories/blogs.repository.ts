@@ -37,5 +37,12 @@ export const blogsRepository = {
         }
        return;
     },
+    async findBlogByIdOrFail(id: string): Promise<WithId<Blog>> {
+        const res = await blogCollection.findOne({_id: new ObjectId(id)});
+        if(!res) {
+            throw new RepositoryNotFoundError("Blog not found.");
+        }
+        return res;
+    },
 
 }
