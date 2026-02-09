@@ -5,30 +5,28 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {UserOutput} from "../routes/output/user-output";
 import {UserQueryInput} from "../routes/input/user-query.input";
 import {UserListPaginatedOutput} from "../routes/output/user-list-paginted.output";
-import {PostOutput} from "../../posts/routes/output/post-output";
 import {UserDB} from "../routes/output/user.db";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 
-
-export class usersQueryRepository {
-    static async findUserByIdOrFail(id: string): Promise<WithId<User>> {
+export class UsersQueryRepository {
+    async findUserByIdOrFail(id: string): Promise<WithId<User>> {
         const user = await userCollection.findOne({_id: new ObjectId(id)});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
         return user;
     }
-    static async isEmailUnique(email: string): Promise<Boolean> {
+    async isEmailUnique(email: string): Promise<Boolean> {
         const normalizedEmail = normalizeEmail(email);
         const user = await userCollection.findOne({email: normalizedEmail});
         return !user;
     }
-    static async isLoginUnique(login: string): Promise<Boolean> {
+    async isLoginUnique(login: string): Promise<Boolean> {
         const loginUser = login.trim();
         const user = await userCollection.findOne({login: loginUser});
         return !user;
     }
-    static async findManyUsers(queryDto: UserQueryInput): Promise<{items: WithId<User>[], totalCount: number}> {
+    async findManyUsers(queryDto: UserQueryInput): Promise<{items: WithId<User>[], totalCount: number}> {
         const {
             pageNumber,
             pageSize,
@@ -62,7 +60,7 @@ export class usersQueryRepository {
         const totalCount = await userCollection.countDocuments(filter);
         return {items, totalCount};
     }
-    static mapToUserOutput(user: WithId<User>): UserOutput {
+    mapToUserOutput(user: WithId<User>): UserOutput {
         return {
             id: user._id.toString(),
             login: user.login,
@@ -70,7 +68,7 @@ export class usersQueryRepository {
             createdAt: user.createdAt,
         }
     }
-    static mapToUserListPaginatedOutput(
+    mapToUserListPaginatedOutput(
         users: WithId<User>[],
         pageNumber: number,
         pageSize: number,
@@ -90,19 +88,20 @@ export class usersQueryRepository {
             ),
         }
     }
-    static async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
+    async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
         const user: WithId<UserDB>|null = await userCollection.findOne({"emailConfirmation.confirmationCode": code});
         return user;
     }
-    static async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
+    async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
         const normalizedEmail = normalizeEmail(email);
         const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
         return user;
     }
-    static async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
+    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
         const normalizedEmail = normalizeEmail(loginOrEmail);
         return await userCollection.findOne({
             $or: [{login: loginOrEmail }, { email: normalizedEmail }],
         });
     }
 }
+

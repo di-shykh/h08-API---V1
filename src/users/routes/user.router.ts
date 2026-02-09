@@ -2,13 +2,11 @@ import {Router} from "express";
 import {paginationAndSortingValidation} from "../../core/middlewares/validation/query-pagination-sorting.validation";
 import {UserSortField} from "./input/user-sort-field";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validation.result.middleware";
-import {getUserListHandler} from "./handlers/get-user-list.handler";
 import {superAdminMiddleware} from "../../auth/middlewares/super-admin.guard-middleware";
 import {userCreateValidation} from "./user.input-dto.validation-middleware";
-import {createUserHandler} from "./handlers/create-user.handler";
 import {idValidator} from "../../core/middlewares/validation/params-id.validation-middleware";
-import {deleteUserHandler} from "./handlers/delete-user.handler";
 import {query} from "express-validator";
+import {userController} from "../../composition.root";
 
 export const usersRouter: Router = Router({});
 
@@ -22,19 +20,19 @@ usersRouter
             query('searchEmailTerm').optional().isString().trim()
         ],
         inputValidationResultMiddleware,
-        getUserListHandler
+        userController.getUserList
     )
     .post(
         "",
         superAdminMiddleware,
         userCreateValidation,
         inputValidationResultMiddleware,
-        createUserHandler
+        userController.createUser
     )
     .delete(
         "/:id",
         superAdminMiddleware,
         idValidator,
         inputValidationResultMiddleware,
-        deleteUserHandler
+        userController.deleteUser
     );
