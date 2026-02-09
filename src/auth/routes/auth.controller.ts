@@ -1,4 +1,3 @@
-import {authService} from "../application/auth.service";
 import {HttpStatus} from "../../core/types/http-statuses";
 import {Request, Response} from "express";
 import {WithId} from "mongodb";
@@ -9,16 +8,24 @@ import {errorHandler} from "../../core/errors/error.handler";
 import {Result} from "../../core/result/result.type";
 import {ResultStatus} from "../../core/result/result.code";
 import {resultCodeToHttpException} from "../../core/result/resultCodeToHttpExeptions";
-import {jwtService} from "../application/jwt.service";
 import {sessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
 import {securityService} from "../../securityDevices/application/security.services";
+import {AuthService} from "../application/auth.service";
+import {JwtService} from "../application/jwt.service";
 
 export class AuthController {
-  static async  login(req: Request, res: Response) {
+    authService: AuthService;
+    jwtService: JwtService;
+
+    constructor(authService: AuthService, jwtService: JwtService) {
+        this.authService = authService;
+        this.jwtService = jwtService;
+    }
+  async  login(req: Request, res: Response) {
       const {loginOrEmail, password} = req.body;
       const deviceName = req.headers['user-agent'] ?? 'Unknown';
       const ipAddress = req.ip ?? 'unknown';
-      const tokenResult = await authService.loginUser(loginOrEmail, password, deviceName, ipAddress);
+      const tokenResult = await this.authService.loginUser(loginOrEmail, password, deviceName, ipAddress);
 
       if(!tokenResult) {
           return res.sendStatus(HttpStatus.Unauthorized);
@@ -36,7 +43,7 @@ export class AuthController {
           accessToken: tokenResult.accessToken
       });
   }
-  static async me(req: Request, res: Response) {
+  async me(req: Request, res: Response) {
       try {
           if (!req.userId) {
               return res.sendStatus(HttpStatus.Unauthorized);
@@ -55,10 +62,10 @@ export class AuthController {
           errorHandler(e,res);
       }
   }
-  static async registration(req: Request, res: Response) {
+  async registration(req: Request, res: Response) {
       try {
           const {login, password, email} = req.body;
-          const result: Result<string|null> = await authService.createUser({login, email, password});
+          const result: Result<string|null> = await this.authService.createUser({login, email, password});
           if(result.status!== ResultStatus.Success){
               res.status(resultCodeToHttpException(result.status)).json({
                   errorsMessages: result.extensions||[]
@@ -70,10 +77,10 @@ export class AuthController {
           errorHandler(e,res);
       }
   }
-  static async registrationConfirmation(req: Request, res: Response) {
+  async registrationConfirmation(req: Request, res: Response) {
       try {
           const codeFromEmail: string = req.body.code as string;
-          const result = await authService.confirmUserRegistration(codeFromEmail);
+          const result = await this.authService.confirmUserRegistration(codeFromEmail);
           if(result.status!== ResultStatus.Success){
               if (result.status === ResultStatus.BadRequest) {
                   return res.status(HttpStatus.BadRequest).json({
@@ -89,10 +96,10 @@ export class AuthController {
           errorHandler(e, res);
       }
   }
-  static async registrationEmailResending(req: Request, res: Response) {
+  async registrationEmailResending(req: Request, res: Response) {
       try{
           const {email} = req.body;
-          const result= await authService.resendEmail(email);
+          const result= await this.authService.resendEmail(email);
           if(result.status !== ResultStatus.Success){
               if (result.status === ResultStatus.BadRequest) {
                   return res.status(HttpStatus.BadRequest).json({
@@ -109,7 +116,7 @@ export class AuthController {
           errorHandler(e, res);
       }
   }
-  static async refreshToken(req: Request, res: Response) {
+  async refreshToken(req: Request, res: Response) {
       try {
           const oldRefreshToken = req.cookies.refreshToken;
           if (!oldRefreshToken) {
@@ -117,7 +124,7 @@ export class AuthController {
                   errorsMessages: [{ message: 'No refresh token' }]
               });
           }
-          const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
+          const decodedPayload = await this.jwtService.verifyTokenFull(oldRefreshToken);
           if (!decodedPayload|| !decodedPayload.userId) {
               return res.status(HttpStatus.Unauthorized).json({
                   errorsMessages: [{ message: 'Refresh token is not valid' }]
@@ -169,7 +176,7 @@ export class AuthController {
           errorHandler(e, res);
       }
   }
-  static async logout(req: Request, res: Response) {
+  async logout(req: Request, res: Response) {
       try {
           const oldRefreshToken = req.cookies.refreshToken;
           if (!oldRefreshToken) {
@@ -177,7 +184,7 @@ export class AuthController {
                   errorsMessages: [{ message: 'No refresh token' }]
               });
           }
-          const decodedPayload = await jwtService.verifyTokenFull(oldRefreshToken);
+          const decodedPayload = await this.jwtService.verifyTokenFull(oldRefreshToken);
           if (!decodedPayload||!decodedPayload.userId||!decodedPayload.iat) {
               return res.sendStatus(HttpStatus.Unauthorized);
           }

@@ -10,9 +10,7 @@ import {AccessTokenGuard} from "../middlewares/access.token.guard";
 import {codeConfirmationValidation} from "../middlewares/validation/registration.input-validation";
 import {rateLimitGuard} from "../middlewares/rate-limiting.middleware";
 import {RefreshTokenGuard} from "../middlewares/refresh.token.guard"
-import {AuthController} from "./auth.controller";
-
-
+import {authController} from "../../composition.root"
 export const authRouter: Router = Router({});
 
 authRouter
@@ -22,41 +20,41 @@ authRouter
         passwordValidation,
         loginOrEmailValidation,
         inputValidationResultMiddleware,
-        AuthController.login
+        authController.login
     )
     .get(
         "/me",
         AccessTokenGuard,
-        AuthController.me
+        authController.me
     )
     .post(
         "/registration",
         rateLimitGuard,
         userCreateValidation,
         inputValidationResultMiddleware,
-        AuthController.registration
+        authController.registration
     )
     .post(
         "/registration-confirmation",
         rateLimitGuard,
         codeConfirmationValidation,
         inputValidationResultMiddleware,
-        AuthController.registrationConfirmation
+        authController.registrationConfirmation
     )
     .post(
         "/registration-email-resending",
         rateLimitGuard,
         emailValidation,
         inputValidationResultMiddleware,
-        AuthController.registrationEmailResending
+        authController.registrationEmailResending
     )
     .post(
         "/refresh-token",
         RefreshTokenGuard,
-        AuthController.refreshToken
+        authController.refreshToken
     )
     .post(
         "/logout",
         RefreshTokenGuard,
-        AuthController.logout
+        authController.logout
     )

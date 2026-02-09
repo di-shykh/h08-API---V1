@@ -1,8 +1,6 @@
 import {Router} from "express";
 import {RefreshTokenGuard} from "../../auth/middlewares/refresh.token.guard";
-import {getSessionListHandler} from "./handlers/get-session-list.handler";
-import {deleteSessionHandler} from "./handlers/delete-session.handler";
-import {deleteSessionListHandler} from "./handlers/delete-session-list.handler";
+import {securityController} from "../../composition.root";
 
 export const securityRouter: Router = Router({});
 
@@ -10,15 +8,15 @@ securityRouter
     .get(
         "/devices",
         RefreshTokenGuard,
-        getSessionListHandler
+        securityController.getSessionList
     )
     .delete(
         "/devices/:id",
         RefreshTokenGuard,
-        deleteSessionHandler
+        securityController.deleteSession
     )
     .delete(
         "/devices",
         RefreshTokenGuard,
-        deleteSessionListHandler
+        securityController.deleteSessionList
     )

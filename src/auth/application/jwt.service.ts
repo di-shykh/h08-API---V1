@@ -1,7 +1,7 @@
 import jwt, {JwtPayload} from 'jsonwebtoken';
 
-export class jwtService {
-    static async   createToken (userId: string, deviceId:string): Promise<{
+export class JwtService {
+    async   createToken (userId: string, deviceId:string): Promise<{
         accessToken: string;
         refreshToken: string;
     }> {
@@ -13,7 +13,7 @@ export class jwtService {
         const refreshToken: string = jwt.sign({ userId, deviceId, type: 'refresh', iat: Date.now()  }, secret, { expiresIn: '20s' });
         return { accessToken, refreshToken };
     }
-    static async verifyToken(token: string): Promise<{ userId: string }|null> {
+    async verifyToken(token: string): Promise<{ userId: string }|null> {
         try {
             return jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
         } catch (e) {
@@ -21,7 +21,7 @@ export class jwtService {
             return null;
         }
     }
-    static async verifyTokenFull(token: string): Promise<JwtPayload & { userId: string } | null> {
+    async verifyTokenFull(token: string): Promise<JwtPayload & { userId: string } | null> {
         try {
             return jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
         } catch (e) {

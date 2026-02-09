@@ -9,8 +9,6 @@ import request from "supertest";
 import {AUTH_PATH, SECURITY_PATH} from "../../../src/core/paths/paths";
 import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {createExpiredToken} from "./auth.e2e.spec";
-import {loginUser} from "./auth.e2e.spec";
-import {SessionOutput} from "../../../src/securityDevices/routes/output/session-output";
 import {randomUUID} from "node:crypto";
 
 describe("Sessions tests", () => {
