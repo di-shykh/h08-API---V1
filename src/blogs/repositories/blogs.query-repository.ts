@@ -6,10 +6,10 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {BlogListPaginatedOutput} from "../routes/output/blog-list-paginated.output";
 import {BlogOutput} from "../routes/output/blog.output";
 
-export const blogsQueryRepository = {
+export class BlogsQueryRepository {
     async findBlogById(id: string):Promise<WithId<Blog> | null> {
         return blogCollection.findOne({_id: new ObjectId(id)})
-    },
+    }
     async findManyBlogs(
         queryDto: BlogQueryInput,
     ): Promise<{items: WithId<Blog>[]; totalCount: number}>{
@@ -34,14 +34,14 @@ export const blogsQueryRepository = {
             .toArray();
         const totalCount = await blogCollection.countDocuments(filter);
         return {items, totalCount};
-    },
+    }
     async findBlogByIdOrFail(id: string): Promise<WithId<Blog>> {
         const res = await blogCollection.findOne({_id: new ObjectId(id)});
         if(!res) {
             throw new RepositoryNotFoundError("Blog not found.");
         }
         return res;
-    },
+    }
     mapToBlogListPaginatedOutput (
         blogs: WithId<Blog>[],
         pageNumber: number, pageSize: number, totalCount: number
@@ -63,7 +63,7 @@ export const blogsQueryRepository = {
                 }),
             ),
         };
-    },
+    }
     mapToBlogOutput(blog: WithId<Blog>):BlogOutput {
         return {
             id: blog._id.toString(),
@@ -73,5 +73,5 @@ export const blogsQueryRepository = {
             createdAt: blog.createdAt,
             isMembership: blog.isMembership,
         };
-    },
+    }
 }

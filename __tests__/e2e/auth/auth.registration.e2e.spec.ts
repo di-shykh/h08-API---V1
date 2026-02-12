@@ -1,12 +1,15 @@
-import rateLimit from 'express-rate-limit';
 jest.mock('../../../src/auth/middlewares/rate-limiting.middleware', () => ({
-    rateLimitGuard: jest.fn((req, res, next) => next()) // Просто пропускаем запрос
+    rateLimitGuard: jest.fn((req, res, next) => next())
 }));
-jest.mock('../../../src/auth/adapters/email.adapter', () => {
+
+// Частичное мокирование - только emailAdapter
+jest.mock('../../../src/composition.root', () => {
+    const originalModule = jest.requireActual('../../../src/composition.root');
     const mockSendEmail = jest.fn().mockResolvedValue(undefined);
     const mockResendEmail = jest.fn().mockResolvedValue(undefined);
 
     return {
+        ...originalModule, // Сохраняем все оригинальные экспорты
         emailAdapter: {
             sendConfirmationEmail: mockSendEmail,
             resendEmail: mockResendEmail
@@ -26,8 +29,7 @@ import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {beforeEach} from "node:test";
 import {v4 as uuidv4} from "uuid";
 
-// import { emailAdapter } from '../../mocks/email-adapter';
-import { emailAdapter } from '../../../src/auth/adapters/email.adapter';
+const { emailAdapter } = require('../../../src/composition.root');
 
 process.env.NODE_ENV = 'test';
 describe("Check Auth: POST /auth/registration and POST /auth/registration-confirmation", () => {

@@ -75,4 +75,22 @@ export class UsersRepository {
         const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
         return user;
     }
+    async addPasswordRecoveryData(_id: ObjectId, recoveryCode: string, expirationDate:string): Promise<boolean> {
+        try {
+            const result = await userCollection.updateOne(
+                {_id: _id},
+                {
+                    $set: {
+                        "passwordRecovery.isUsed": false,
+                        "passwordRecovery.passwordRecoveryCode": recoveryCode,
+                        "passwordRecovery.passwordRecoveryExpiration": expirationDate
+                    }
+                }
+            );
+            return result.modifiedCount === 1;
+        } catch (error) {
+            console.error("Error updating email confirmation:", error);
+            return false;
+        }
+    }
 }

@@ -6,7 +6,7 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {PostListPaginatedOutput} from "../routes/output/post-list-paginated.output";
 import {PostOutput} from "../routes/output/post-output";
 
-export const postsQueryRepository = {
+export class PostsQueryRepository {
     async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
         const filter: any = {'blogId': blogId};
         let items: WithId<Post>[];
@@ -30,7 +30,7 @@ export const postsQueryRepository = {
         }
         const totalCount = await postCollection.countDocuments(filter);
         return {items, totalCount};
-    },
+    }
     async findManyPosts(queryDto: PostQueryInput): Promise<{items: WithId<Post>[], totalCount: number}> {
         const {
             pageNumber,
@@ -52,14 +52,14 @@ export const postsQueryRepository = {
             .toArray();
         const totalCount = await postCollection.countDocuments(filter);
         return {items, totalCount};
-    },
+    }
     async findPostByIdOrFail(id: string): Promise<WithId<Post>> {
         const result = await postCollection.findOne({_id: new ObjectId(id)});
         if (!result) {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return result;
-    },
+    }
     mapToPostListPaginatedOutput(
         posts:WithId<Post>[],
         pageNumber: number, pageSize: number, totalCount: number,
@@ -80,7 +80,7 @@ export const postsQueryRepository = {
                 }),
             ),
         }
-    },
+    }
     mapToPostOutput(post: WithId<Post>): PostOutput {
         return {
             id: post._id.toString(),
@@ -91,5 +91,5 @@ export const postsQueryRepository = {
             blogName: post.blogName,
             createdAt: post.createdAt,
         };
-    },
+    }
 }

@@ -1,9 +1,4 @@
 import {Router} from "express";
-import {getPostHandler} from "./handlers/get-post.handler";
-import {getPostListHandler} from "./handlers/get-post-list.handler";
-import {createPostHandler} from "./handlers/create-post.handler";
-import {updatePostHandler} from "./handlers/update-post.handler";
-import {deletePostHandler} from "./handlers/delete-post.handler";
 import {idValidator} from "../../core/middlewares/validation/params-id.validation-middleware";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validation.result.middleware";
 import {
@@ -15,8 +10,7 @@ import {paginationAndSortingValidation} from "../../core/middlewares/validation/
 import {PostSortField} from "./input/post-sort-field";
 import {AccessTokenGuard} from "../../auth/middlewares/access.token.guard";
 import { commentInputValidation} from "../../comments/routes/comment.input-dto.validation-middleware";
-import {createCommentHandler} from "../../comments/routes/handlers/create-comment.handler";
-import {getCommentListHandler} from "../../comments/routes/handlers/get-comment-list.handler";
+import {postsController} from "../../composition.root";
 
 export const postsRouter: Router = Router({});
 
@@ -25,43 +19,48 @@ postsRouter
         "",
         paginationAndSortingValidation(PostSortField),
         inputValidationResultMiddleware,
-        getPostListHandler)
+        postsController.getPostList.bind(postsController)
+    )
     .get(
         "/:id",
         idValidator,
         inputValidationResultMiddleware,
-        getPostHandler)
+        postsController.getPost.bind(postsController)
+    )
     .post(
         "",
         superAdminMiddleware,
         postCreateInputValidation,
         inputValidationResultMiddleware,
-        createPostHandler)
+        postsController.createPost.bind(postsController)
+    )
     .put(
         "/:id",
         superAdminMiddleware,
         idValidator,
         postUpdateInputValidation,
         inputValidationResultMiddleware,
-        updatePostHandler)
+        postsController.updatePost.bind(postsController)
+    )
     .delete(
         "/:id",
         superAdminMiddleware,
         idValidator,
         inputValidationResultMiddleware,
-        deletePostHandler)
+        postsController.deletePost.bind(postsController)
+    )
     .post(
         "/:id/comments",
         AccessTokenGuard,
         idValidator,
         commentInputValidation,
         inputValidationResultMiddleware,
-        createCommentHandler
+        postsController.createComment.bind(postsController)
     )
     .get(
         "/:id/comments",
         idValidator,
         paginationAndSortingValidation(PostSortField),
         inputValidationResultMiddleware,
-        getCommentListHandler
+        postsController.getCommentList.bind(postsController)
     )

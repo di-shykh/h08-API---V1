@@ -1,12 +1,19 @@
-import {postsRepository} from "../repositories/posts.repository";
+import {PostsRepository} from "../repositories/posts.repository";
 import {PostAttributes} from "./dtos/post-attributs";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
-import {blogsQueryRepository} from "../../blogs/repositories/blogs.query-repository";
-import {blogsRepository} from "../../blogs/repositories/blogs.repository";
+import {BlogsRepository} from "../../blogs/repositories/blogs.repository";
 
-export const postsService = {
+export class PostsService {
+    postsRepository: PostsRepository;
+    blogsRepository: BlogsRepository;
+
+    constructor(postsRepository: PostsRepository, blogsRepository: BlogsRepository) {
+        this.postsRepository = postsRepository;
+        this.blogsRepository = blogsRepository;
+    }
+
     async createPost(dto: PostAttributes): Promise<string> {
-        const blog = await blogsRepository.findBlogByIdOrFail(dto.blogId);
+        const blog = await this.blogsRepository.findBlogByIdOrFail(dto.blogId);
         if(!blog){
             throw new RepositoryNotFoundError("Blog does not exist");
         }
@@ -18,12 +25,12 @@ export const postsService = {
             blogName: blog.name,
             createdAt: new Date().toISOString(),
         }
-        return await postsRepository.createPost(newPost);
-    },
+        return await this.postsRepository.createPost(newPost);
+    }
     async updatePost(id: string, dto: PostAttributes): Promise<void> {
-        await postsRepository.updatePost(id, dto);
-    },
+        await this.postsRepository.updatePost(id, dto);
+    }
     async deletePost(id: string): Promise<void> {
-        await postsRepository.deletePost(id);
+        await this.postsRepository.deletePost(id);
     }
 }

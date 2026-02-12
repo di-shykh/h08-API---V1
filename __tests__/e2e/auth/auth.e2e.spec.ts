@@ -7,7 +7,7 @@ import {clearDb} from "../../utils/clear-db";
 import {getUserDto} from "../../utils/users/get-user-dto";
 import {createUser} from "../../utils/users/create-user";
 import request from "supertest";
-import {AUTH_PATH, SECURITY_PATH} from "../../../src/core/paths/paths";
+import {AUTH_PATH} from "../../../src/core/paths/paths";
 import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {getCookiesString, hasCookieWithName, validateRefreshTokenCookie} from "../../utils/cookies.helpers";
 import jwt from 'jsonwebtoken';

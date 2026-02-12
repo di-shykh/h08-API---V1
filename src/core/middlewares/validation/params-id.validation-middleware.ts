@@ -1,7 +1,6 @@
 import {param, body} from "express-validator";
-import {blogsRepository} from "../../../blogs/repositories/blogs.repository";
 import {RepositoryNotFoundError} from "../../errors/repository-not-found.error";
-import {blogsQueryRepository} from "../../../blogs/repositories/blogs.query-repository";
+import {blogsQueryRepository} from "../../../composition.root";
 
 export const idValidator = param("id")
     .exists().withMessage('id is required')

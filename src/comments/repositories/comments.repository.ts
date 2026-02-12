@@ -6,15 +6,15 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
 
-export const commentsRepository = {
+export class CommentsRepository {
     async createComment(comment: CommentDB): Promise<string> {
         const insertedComment = await commentCollection.insertOne(comment);
         return insertedComment.insertedId.toString();
-    },
+    }
     async deleteComment(id: string): Promise<DeleteResult> {
         const deletedComments: DeleteResult = await commentCollection.deleteOne({_id: new ObjectId(id)})
         return deletedComments;
-    },
+    }
     async updateComment(commentId: string, dto: CommentInputDto): Promise<UpdateResult> {
         const updatedComment = await commentCollection.updateOne(
             {_id: new ObjectId(commentId)},
@@ -25,14 +25,14 @@ export const commentsRepository = {
             }
         );
         return updatedComment;
-    },
+    }
     async findCommentById(id: string): Promise<WithId<CommentDB>> {
         const result = await commentCollection.findOne({_id: new ObjectId(id)});
         if (!result) {
             throw new RepositoryNotFoundError("Comment not found.");
         }
         return result;
-    },
+    }
     async mapToCommentOutput(comment: WithId<CommentDB>): Promise<CommentOutput> {
         const user: WithId<UserDB> | null = await userCollection.findOne({_id: new ObjectId(comment.userId)});
         if (!user) {
@@ -48,5 +48,5 @@ export const commentsRepository = {
             createdAt: comment.createdAt,
         }
         return commentOutput;
-    },
+    }
 }

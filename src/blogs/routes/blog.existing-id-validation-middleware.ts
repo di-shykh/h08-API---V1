@@ -1,11 +1,8 @@
-import {validationResult, ValidationError, FieldValidationError} from "express-validator";
 import {Request, Response, NextFunction} from "express";
-import {HttpStatus} from "../../core/types/http-statuses";
-import {blogsRepository} from "../repositories/blogs.repository";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {errorHandler} from "../../core/errors/error.handler";
 import {ObjectId} from "mongodb";
-import {blogsQueryRepository} from "../repositories/blogs.query-repository";
+import {blogsQueryRepository} from "../../composition.root";
 
 function isValidObjectId(id: string): boolean {
     try{

@@ -47,4 +47,22 @@ export class EmailAdapter {
             throw new Error('Не удалось отправить email');
         }
     }
+    async sendRecoveryCodeOnEmail(email: string, recoveryCode: string): Promise<void> {
+        try{
+            const info = await transporter.sendMail({
+                from: `"Diana Shykh homework 10" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: "Password Recovery",
+                text: "Password Recovery", // Plain-text version of the message
+                html: `<h1>Password recovery</h1>
+                           <p>To finish password recovery please follow the link below:
+                              <a href='https://somesite.com/password-recovery?recoveryCode=${recoveryCode}'>recovery password</a>
+                          </p>`, // HTML version of the message
+            });
+            console.log('Email отправлен:', info.messageId);
+        } catch (e) {
+            console.error('Ошибка отправки email:', e);
+            throw new Error('Не удалось отправить email');
+        }
+    }
 }

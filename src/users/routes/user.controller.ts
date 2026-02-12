@@ -7,6 +7,7 @@ import {errorHandler} from "../../core/errors/error.handler";
 import {UserOutput} from "./output/user-output";
 import {UsersQueryRepository} from "../repositories/user.query-repository";
 import {UsersService} from "../application/user.services";
+import {bcryptService, usersRepository} from "../../composition.root";
 
 export class UserController {
     usersQueryRepository: UsersQueryRepository;
@@ -15,6 +16,7 @@ export class UserController {
     constructor(usersQueryRepository: UsersQueryRepository, usersService: UsersService) {
         this.usersQueryRepository = usersQueryRepository;
         this.usersService = usersService;
+
     }
 
     async getUserList(req: Request, res: Response) {
@@ -36,7 +38,9 @@ export class UserController {
         }
     }
     async createUser(req: Request, res: Response) {
+        console.log("from userService: ", this);
         try {
+
             const createdUser = await this.usersService.createUser(req.body);
             const insertedUser = await this.usersQueryRepository.findUserByIdOrFail(createdUser);
             const userOutput: UserOutput = this.usersQueryRepository.mapToUserOutput(insertedUser);

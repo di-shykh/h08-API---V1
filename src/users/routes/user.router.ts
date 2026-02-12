@@ -20,19 +20,19 @@ usersRouter
             query('searchEmailTerm').optional().isString().trim()
         ],
         inputValidationResultMiddleware,
-        userController.getUserList
+        userController.getUserList.bind(userController)
     )
     .post(
         "",
         superAdminMiddleware,
         userCreateValidation,
         inputValidationResultMiddleware,
-        userController.createUser
+        userController.createUser.bind(userController)
     )
     .delete(
         "/:id",
         superAdminMiddleware,
         idValidator,
         inputValidationResultMiddleware,
-        userController.deleteUser
+        userController.deleteUser.bind(userController)
     );

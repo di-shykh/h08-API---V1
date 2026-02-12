@@ -134,4 +134,20 @@ export class AuthService {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
     }
+    async passwordRecovery(email: string): Promise<Result<boolean|null>> {
+        const normalizedEmail = normalizeEmail(email);
+        const user = await this.usersRepository.findUserByEmail(normalizedEmail);
+        if(!user) {
+            return ResultObject.NoContent();
+        }
+        const recoveryCode: string = uuidv4();
+        const expirationDate: string = addHours(new Date(), 24).toISOString();
+        const recoveryResult = await this.usersRepository.addPasswordRecoveryData(user._id, recoveryCode, expirationDate);
+        try {
+            const result = await this.emailAdapter.sendRecoveryCodeOnEmail(normalizedEmail, recoveryCode);
+        }catch(err){
+            return ResultObject.BadRequest('email', 'recovered code was not send');
+        }
+        return ResultObject.NoContent();
+    }
 }

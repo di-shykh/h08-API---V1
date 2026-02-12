@@ -7,14 +7,14 @@ import {UserDB} from "../../users/routes/output/user.db";
 import {CommentQueryInput} from "../routes/input/comment-query.input";
 import {CommentListPaginatedOutput} from "../routes/output/comment-list-paginated.output";
 
-export const commentsQueryRepository = {
+export class CommentsQueryRepository {
     async findCommentById(id: string): Promise<WithId<CommentDB>> {
         const result = await commentCollection.findOne({_id: new ObjectId(id)});
         if (!result) {
             throw new RepositoryNotFoundError("Comment not found.");
         }
         return result;
-    },
+    }
     async findManyComments(queryDto: CommentQueryInput, postId: string): Promise<{items: WithId<CommentDB>[], totalCount: number}> {
         const {
             pageNumber,
@@ -53,7 +53,7 @@ export const commentsQueryRepository = {
         ;
         const totalCount = await commentCollection.countDocuments(filter);
         return {items, totalCount};
-    },
+    }
     async mapToCommentOutput(comment: WithId<CommentDB>): Promise<CommentOutput> {
         const user: WithId<UserDB> | null = await userCollection.findOne({_id: new ObjectId(comment.userId)});
         if (!user) {
@@ -69,7 +69,7 @@ export const commentsQueryRepository = {
             createdAt: comment.createdAt,
         }
         return commentOutput;
-    },
+    }
     async mapToCommentListOutput(
         comments: WithId<CommentDB>[],
         pageNumber: number,

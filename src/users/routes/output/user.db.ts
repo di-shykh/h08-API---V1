@@ -7,5 +7,10 @@ export type UserDB = {
         isConfirmed: boolean;
         confirmationCode: string;
         expirationDate: string;
+    };
+    passwordRecovery?: {
+        isUsed: boolean;
+        passwordRecoveryCode: string;
+        passwordRecoveryExpiration: string;
     }
 }

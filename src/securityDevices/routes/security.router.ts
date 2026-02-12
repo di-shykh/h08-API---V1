@@ -8,15 +8,15 @@ securityRouter
     .get(
         "/devices",
         RefreshTokenGuard,
-        securityController.getSessionList
+        securityController.getSessionList.bind(securityController)
     )
     .delete(
         "/devices/:id",
         RefreshTokenGuard,
-        securityController.deleteSession
+        securityController.deleteSession.bind(securityController)
     )
     .delete(
         "/devices",
         RefreshTokenGuard,
-        securityController.deleteSessionList
+        securityController.deleteSessionList.bind(securityController)
     )

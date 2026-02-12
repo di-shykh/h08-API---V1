@@ -16,7 +16,7 @@ const createErrorResult = (errors: Array<{message: string, field?: string}>): AP
 };
 
 export function errorHandler(error: unknown, res: Response): void {
-
+    console.log("Error from create user:", error);
     if (error instanceof DuplicateFieldError) {
         res.status(HttpStatus.BadRequest).json(
             createErrorResult([

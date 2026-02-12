@@ -11,6 +11,7 @@ import {codeConfirmationValidation} from "../middlewares/validation/registration
 import {rateLimitGuard} from "../middlewares/rate-limiting.middleware";
 import {RefreshTokenGuard} from "../middlewares/refresh.token.guard"
 import {authController} from "../../composition.root"
+import {recoveryCodeValidation} from "../middlewares/validation/password-recovery-code.validation";
 export const authRouter: Router = Router({});
 
 authRouter
@@ -20,41 +21,56 @@ authRouter
         passwordValidation,
         loginOrEmailValidation,
         inputValidationResultMiddleware,
-        authController.login
+        authController.login.bind(authController)
     )
     .get(
         "/me",
         AccessTokenGuard,
-        authController.me
+        authController.me.bind(authController)
     )
     .post(
         "/registration",
         rateLimitGuard,
         userCreateValidation,
         inputValidationResultMiddleware,
-        authController.registration
+        authController.registration.bind(authController)
     )
     .post(
         "/registration-confirmation",
         rateLimitGuard,
         codeConfirmationValidation,
         inputValidationResultMiddleware,
-        authController.registrationConfirmation
+        authController.registrationConfirmation.bind(authController)
     )
     .post(
         "/registration-email-resending",
         rateLimitGuard,
         emailValidation,
         inputValidationResultMiddleware,
-        authController.registrationEmailResending
+        authController.registrationEmailResending.bind(authController)
     )
     .post(
         "/refresh-token",
         RefreshTokenGuard,
-        authController.refreshToken
+        authController.refreshToken.bind(authController)
     )
     .post(
         "/logout",
         RefreshTokenGuard,
-        authController.logout
+        authController.logout.bind(authController)
+    )
+    .post(
+        "/password-recovery",
+        rateLimitGuard,
+        emailValidation,
+        inputValidationResultMiddleware,
+        authController.passwordRecovery.bind(authController)
+    )
+    .post(
+        "/new-password",
+        rateLimitGuard,
+        passwordValidation,
+        recoveryCodeValidation,
+        inputValidationResultMiddleware,
+        authController.newPassword.bind(authController)
     )

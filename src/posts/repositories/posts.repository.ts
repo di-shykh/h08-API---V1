@@ -5,12 +5,11 @@ import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {PostQueryInput} from "../routes/input/post-query.input";
 
-export const postsRepository = {
-
+export class PostsRepository {
     async createPost(newPost: Post): Promise<string> {
         const insertPost = await postCollection.insertOne(newPost);
         return insertPost.insertedId.toString();
-    },
+    }
    async updatePost(id: string, dto: PostInputDto): Promise<void> {
         const updatePostResult = await postCollection.updateOne(
             {_id: new ObjectId(id)},
@@ -27,14 +26,14 @@ export const postsRepository = {
         }
 
         return;
-    },
+    }
     async deletePost(id: string): Promise<void> {
         const deletePostResult = await postCollection.deleteOne({_id: new ObjectId(id)});
         if (deletePostResult.deletedCount < 1) {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return;
-    },
+    }
     async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
         const filter: any = {'blogId': blogId};
         let items: WithId<Post>[];
@@ -58,13 +57,14 @@ export const postsRepository = {
         }
         const totalCount = await postCollection.countDocuments(filter);
         return {items, totalCount};
-    },
+    }
     async findPostByIdOrFail(id: string): Promise<WithId<Post>> {
         const result = await postCollection.findOne({_id: new ObjectId(id)});
         if (!result) {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return result;
-    },
+    }
 }
+
 

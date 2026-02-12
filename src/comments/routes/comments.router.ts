@@ -1,24 +1,22 @@
 import {Router} from "express";
 import {idValidator} from "../../core/middlewares/validation/params-id.validation-middleware";
-import {getCommentHandler} from "./handlers/get-comment.handler";
 import {AccessTokenGuard} from "../../auth/middlewares/access.token.guard";
-import {deleteCommentHandler} from "./handlers/delete-comment.handler";
-import {updateCommentHandler} from "./handlers/update-comment.handler";
 import {commentInputValidation} from "./comment.input-dto.validation-middleware";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validation.result.middleware";
+import {commentsController} from "../../composition.root";
 
 export const commentsRouter: Router = Router({});
 commentsRouter
     .get(
         "/:id",
         idValidator,
-        getCommentHandler
+        commentsController.getComment.bind(commentsController)
     )
     .delete(
         "/:id",
         AccessTokenGuard,
         idValidator,
-        deleteCommentHandler
+        commentsController.deleteComment.bind(commentsController)
     )
     .put (
         "/:id",
@@ -26,5 +24,5 @@ commentsRouter
         idValidator,
         commentInputValidation,
         inputValidationResultMiddleware,
-        updateCommentHandler
+        commentsController.updateComment.bind(commentsController)
     )
