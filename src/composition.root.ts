@@ -23,6 +23,7 @@ import {PostsController} from "./posts/routes/posts.controller";
 import {PostsQueryRepository} from "./posts/repositories/posts.query-repository";
 import {PostsRepository} from "./posts/repositories/posts.repository";
 import {PostsService} from "./posts/application/post.services";
+import {PasswordRecoveryRepository} from "./auth/repositories/passoword-recovery.repository";
 
 export const bcryptService = new BcryptService();
 export const emailAdapter = new EmailAdapter();
@@ -37,7 +38,8 @@ export const commentsQueryRepository = new CommentsQueryRepository();
 export const commentsRepository = new CommentsRepository();
 export const postsQueryRepository = new PostsQueryRepository();
 export const postsRepository = new PostsRepository();
-export const authService = new AuthService(bcryptService,jwtService,emailAdapter,sessionRepository,usersRepository);
+export const passwordRecoveryRepository = new PasswordRecoveryRepository();
+export const authService = new AuthService(bcryptService,jwtService,emailAdapter,sessionRepository,usersRepository,passwordRecoveryRepository);
 
 export const securityService = new SecurityService(jwtService, sessionRepository);
 export const authController = new AuthController(authService,jwtService, securityService, sessionQueryRepository,usersQueryRepository);

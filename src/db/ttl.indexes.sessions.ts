@@ -1,11 +1,7 @@
-import {Collection} from "mongodb";
-import {Session} from "../securityDevices/domain/session";
-import {RateLimit} from "../auth/types/rate-limit";
-
 export async function createTTLIndexes(): Promise<void> {
     try {
         // Получите коллекции из вашего mongo.bd файла
-        const { sessionCollection, rateLimitCollection } = await import('../db/mongo.bd');
+        const { sessionCollection, rateLimitCollection, passwordRecoveryCollection } = await import('../db/mongo.bd');
 
         // TTL для сессий (предполагаем, что expiresAt - это дата истечения)
         const sessionIndexes = await sessionCollection.indexes();
@@ -16,7 +12,15 @@ export async function createTTLIndexes(): Promise<void> {
             );
             console.log('✅ Session TTL index created');
         }
-
+        // TTL для кода восстановления пароля (passwordRecoveryExpiration - это дата истечения)
+        const passwordIndexes = await passwordRecoveryCollection.indexes();
+        if (!passwordIndexes.some(idx => idx.name === 'pass_exp_ttl_index')) {
+            await sessionCollection.createIndex(
+                { passwordRecoveryExpiration: 1 },
+                { expireAfterSeconds: 0, name: 'pass_exp_ttl_index' }
+            );
+            console.log('✅ Password Recovery TTL index created');
+        }
         // TTL для rate limit (удалять записи старше 10 секунд)
         const rateLimitIndexes = await rateLimitCollection.indexes();
         if (!rateLimitIndexes.some(idx => idx.name === 'date_ttl_index')) {

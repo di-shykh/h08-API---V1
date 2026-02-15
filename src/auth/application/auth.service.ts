@@ -11,6 +11,7 @@ import {BcryptService} from "../adapters/bcrypt.service";
 import {JwtService} from "./jwt.service";
 import {SessionRepository} from "../../securityDevices/repositories/session.repository";
 import {UsersRepository} from "../../users/repositories/user.repository";
+import {PasswordRecoveryRepository} from "../repositories/passoword-recovery.repository";
 
 export class AuthService {
     bcryptService: BcryptService;
@@ -18,18 +19,21 @@ export class AuthService {
     emailAdapter: EmailAdapter;
     sessionRepository: SessionRepository;
     usersRepository: UsersRepository;
+    passwordRecoveryRepository: PasswordRecoveryRepository;
     constructor(
         bcryptService: BcryptService,
         jwtService: JwtService,
         emailAdapter: EmailAdapter,
         sessionRepository: SessionRepository,
         usersRepository: UsersRepository,
+        passowordRecoveryRepository: PasswordRecoveryRepository
     ) {
         this.bcryptService = bcryptService;
         this.jwtService = jwtService;
         this.emailAdapter = emailAdapter;
         this.sessionRepository = sessionRepository;
         this.usersRepository = usersRepository;
+        this.passwordRecoveryRepository = passowordRecoveryRepository;
     }
 
     async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
@@ -128,7 +132,7 @@ export class AuthService {
 
         try{
             await this.emailAdapter.resendEmail(email,confirmationCode);
-           const result = await this.usersRepository.updateUserEmailConfirmation(user._id, confirmationCode, expirationDate);
+            const result = await this.usersRepository.updateUserEmailConfirmation(user._id, confirmationCode, expirationDate);
             return ResultObject.Success(result);
         } catch (e) {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
@@ -142,12 +146,28 @@ export class AuthService {
         }
         const recoveryCode: string = uuidv4();
         const expirationDate: string = addHours(new Date(), 24).toISOString();
-        const recoveryResult = await this.usersRepository.addPasswordRecoveryData(user._id, recoveryCode, expirationDate);
+        const recoveryResult = await this.passwordRecoveryRepository.addPasswordRecoveryData(user._id, recoveryCode, expirationDate);
         try {
             const result = await this.emailAdapter.sendRecoveryCodeOnEmail(normalizedEmail, recoveryCode);
         }catch(err){
             return ResultObject.BadRequest('email', 'recovered code was not send');
         }
+        return ResultObject.NoContent();
+    }
+    async newPassowrd(newPassword: string, recoveryCode: string): Promise<Result<boolean|null>> {
+        const recoveryResult = await this.passwordRecoveryRepository.findCode(recoveryCode);
+        if(!recoveryResult||recoveryResult.isUsed){
+            return ResultObject.BadRequest('recoveryCode', 'Recovery code is not valid');
+        }
+        if(isAfter(new Date(),recoveryResult.passwordRecoveryExpiration)){
+            return ResultObject.BadRequest('recoveryCode', 'Recovery code expired');
+        }
+        const newPasswordHash: string = await this.bcryptService.generateHash(newPassword);
+        const result  = await this.usersRepository.saveNewPassword(recoveryResult.userId,newPasswordHash);
+        if(!result){
+            return ResultObject.BadRequest('recoveryCode', 'User with this recovery code is not exist');
+        }
+        await this.passwordRecoveryRepository.changeStatusRecoveryCode(recoveryCode);
         return ResultObject.NoContent();
     }
 }

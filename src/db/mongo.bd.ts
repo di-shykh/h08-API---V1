@@ -7,6 +7,7 @@ import {CommentDB} from "../comments/routes/output/commnent.db";
 import {createTTLIndexes} from "./ttl.indexes.sessions";
 import {Session} from "../securityDevices/domain/session";
 import {RateLimit} from "../auth/types/rate-limit";
+import {PasswordRecovery} from "../auth/types/password-recovery";
 
 const BLOG_COLLECTION_NAME = 'blogs';
 const POST_COLLECTION_NAME = 'posts';
@@ -14,6 +15,7 @@ const USERS_COLLECTION_NAME = 'users';
 const COMMENTS_COLLECTION_NAME = 'comments';
 const SESSION_COLLECTION_NAME = 'sessions';
 const RATE_LIMIT_COLLECTION_NAME = 'rateLimit';
+const PASSWORD_RECOVERY_COLLECTION_NAME = 'passwordRecovery';
 
 export let client: MongoClient;
 export let blogCollection: Collection<Blog>;
@@ -22,6 +24,7 @@ export let userCollection: Collection<UserDB>;
 export let commentCollection: Collection<CommentDB>;
 export let sessionCollection: Collection<Session>;
 export let rateLimitCollection: Collection<RateLimit>;
+export let passwordRecoveryCollection: Collection<PasswordRecovery>;
 
 // Подключения к бд
 export async function runDB(url: string): Promise<void> {
@@ -36,6 +39,7 @@ export async function runDB(url: string): Promise<void> {
         commentCollection = db.collection<CommentDB>(COMMENTS_COLLECTION_NAME);
         sessionCollection = db.collection<Session>(SESSION_COLLECTION_NAME);
         rateLimitCollection = db.collection<RateLimit>(RATE_LIMIT_COLLECTION_NAME);
+        passwordRecoveryCollection = db.collection<PasswordRecovery>(PASSWORD_RECOVERY_COLLECTION_NAME);
         await client.connect();
         await db.command({ ping: 1 });
         console.log('✅ Connected to the database');
@@ -67,6 +71,7 @@ async function createCollectionsIfNotExist(db: Db): Promise<void> {
         { name: COMMENTS_COLLECTION_NAME, options: {} },
         { name: SESSION_COLLECTION_NAME, options: {} },
         { name: RATE_LIMIT_COLLECTION_NAME, options: {} },
+        { name: PASSWORD_RECOVERY_COLLECTION_NAME, options: {} },
     ];
 
     for (const { name, options } of collectionsToCreate) {

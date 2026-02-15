@@ -8,5 +8,8 @@ export const SETTINGS = {
     MONGO_URL:
         process.env.MONGO_URL || 'mongodb://0.0.0.0:27017',
     DB_NAME: process.env.DB_NAME || 'h03-db',
+    EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_FROM: process.env.EMAIL_FROM,
 };
 

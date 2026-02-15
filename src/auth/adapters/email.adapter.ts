@@ -1,19 +1,23 @@
 import nodemailer from 'nodemailer';
+import {SETTINGS} from "../../core/settings/settings";
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // Use true for port 465, false for port 587
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 export class EmailAdapter {
+    transporter: nodemailer.Transporter;
+    constructor() {
+         this.transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // Use true for port 465, false for port 587
+            auth: {
+                user: SETTINGS.EMAIL_USER,
+                pass: SETTINGS.EMAIL_PASSWORD
+            },
+        });
+    }
     async sendConfirmationEmail(email: string, confirmationCode: string): Promise<void> {
         try{
-            const info = await transporter.sendMail({
-                from: `"Diana Shykh homework 07" <${process.env.EMAIL_USER}>`,
+            const info = await this.transporter.sendMail({
+                from: `"Diana Shykh homework 07" <${SETTINGS.EMAIL_FROM}>`,
                 to: email,
                 subject: "Confirmation email",
                 text: "Please, confirm your email", // Plain-text version of the message
@@ -31,8 +35,8 @@ export class EmailAdapter {
     }
     async resendEmail(email: string, confirmationCode: string): Promise<void> {
         try{
-            const info = await transporter.sendMail({
-                from: `"Diana Shykh homework 07" <${process.env.EMAIL_USER}>`,
+            const info = await this.transporter.sendMail({
+                from: `"Diana Shykh homework 07" <${SETTINGS.EMAIL_FROM}>`,
                 to: email,
                 subject: "Confirmation email",
                 text: "Hello world?", // Plain-text version of the message
@@ -49,8 +53,8 @@ export class EmailAdapter {
     }
     async sendRecoveryCodeOnEmail(email: string, recoveryCode: string): Promise<void> {
         try{
-            const info = await transporter.sendMail({
-                from: `"Diana Shykh homework 10" <${process.env.EMAIL_USER}>`,
+            const info = await this.transporter.sendMail({
+                from: `"Diana Shykh homework 10" <${SETTINGS.EMAIL_FROM}>`,
                 to: email,
                 subject: "Password Recovery",
                 text: "Password Recovery", // Plain-text version of the message

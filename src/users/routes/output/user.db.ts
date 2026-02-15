@@ -8,9 +8,4 @@ export type UserDB = {
         confirmationCode: string;
         expirationDate: string;
     };
-    passwordRecovery?: {
-        isUsed: boolean;
-        passwordRecoveryCode: string;
-        passwordRecoveryExpiration: string;
-    }
 }

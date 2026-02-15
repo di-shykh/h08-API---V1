@@ -22,6 +22,7 @@ testingRouter.delete('/all-data',async (req: Request, res: Response): Promise<vo
             commentCollection.deleteMany(),
             sessionCollection.deleteMany(),
             rateLimitCollection.deleteMany(),
+            postCollection.deleteMany(),
         ])
     }
     catch(err){
