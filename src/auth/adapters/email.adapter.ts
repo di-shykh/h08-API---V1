@@ -57,7 +57,6 @@ export class EmailAdapter {
                 from: `"Diana Shykh homework 10" <${SETTINGS.EMAIL_FROM}>`,
                 to: email,
                 subject: "Password Recovery",
-                text: "Password Recovery", // Plain-text version of the message
                 html: `<h1>Password recovery</h1>
                            <p>To finish password recovery please follow the link below:
                               <a href='https://somesite.com/password-recovery?recoveryCode=${recoveryCode}'>recovery password</a>

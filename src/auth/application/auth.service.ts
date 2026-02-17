@@ -11,7 +11,7 @@ import {BcryptService} from "../adapters/bcrypt.service";
 import {JwtService} from "./jwt.service";
 import {SessionRepository} from "../../securityDevices/repositories/session.repository";
 import {UsersRepository} from "../../users/repositories/user.repository";
-import {PasswordRecoveryRepository} from "../repositories/passoword-recovery.repository";
+import {PasswordRecoveryRepository} from "../repositories/password-recovery.repository";
 
 export class AuthService {
     bcryptService: BcryptService;
@@ -26,14 +26,14 @@ export class AuthService {
         emailAdapter: EmailAdapter,
         sessionRepository: SessionRepository,
         usersRepository: UsersRepository,
-        passowordRecoveryRepository: PasswordRecoveryRepository
+        passwordRecoveryRepository: PasswordRecoveryRepository
     ) {
         this.bcryptService = bcryptService;
         this.jwtService = jwtService;
         this.emailAdapter = emailAdapter;
         this.sessionRepository = sessionRepository;
         this.usersRepository = usersRepository;
-        this.passwordRecoveryRepository = passowordRecoveryRepository;
+        this.passwordRecoveryRepository = passwordRecoveryRepository;
     }
 
     async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
@@ -147,14 +147,18 @@ export class AuthService {
         const recoveryCode: string = uuidv4();
         const expirationDate: string = addHours(new Date(), 24).toISOString();
         const recoveryResult = await this.passwordRecoveryRepository.addPasswordRecoveryData(user._id, recoveryCode, expirationDate);
+        if(!recoveryResult){
+            return ResultObject.BadRequest('email', 'Failed to save recovery code');
+        }
         try {
             const result = await this.emailAdapter.sendRecoveryCodeOnEmail(normalizedEmail, recoveryCode);
         }catch(err){
+            console.error('Failed to send recovery email:', err);
             return ResultObject.BadRequest('email', 'recovered code was not send');
         }
         return ResultObject.NoContent();
     }
-    async newPassowrd(newPassword: string, recoveryCode: string): Promise<Result<boolean|null>> {
+    async newPassword(newPassword: string, recoveryCode: string): Promise<Result<boolean|null>> {
         const recoveryResult = await this.passwordRecoveryRepository.findCode(recoveryCode);
         if(!recoveryResult||recoveryResult.isUsed){
             return ResultObject.BadRequest('recoveryCode', 'Recovery code is not valid');

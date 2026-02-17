@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {
     emailValidation,
-    loginOrEmailValidation,
+    loginOrEmailValidation, newPasswordValidation,
     passwordValidation,
     userCreateValidation
 } from "../../users/routes/user.input-dto.validation-middleware";
@@ -69,7 +69,7 @@ authRouter
     .post(
         "/new-password",
         rateLimitGuard,
-        passwordValidation,
+        newPasswordValidation,
         recoveryCodeValidation,
         inputValidationResultMiddleware,
         authController.newPassword.bind(authController)

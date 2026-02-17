@@ -23,7 +23,7 @@ import {PostsController} from "./posts/routes/posts.controller";
 import {PostsQueryRepository} from "./posts/repositories/posts.query-repository";
 import {PostsRepository} from "./posts/repositories/posts.repository";
 import {PostsService} from "./posts/application/post.services";
-import {PasswordRecoveryRepository} from "./auth/repositories/passoword-recovery.repository";
+import {PasswordRecoveryRepository} from "./auth/repositories/password-recovery.repository";
 
 export const bcryptService = new BcryptService();
 export const emailAdapter = new EmailAdapter();

@@ -16,6 +16,13 @@ export const passwordValidation = body("password")
     .notEmpty()
     .isLength({min: 6, max: 20})
     .withMessage('Password must be between 6 and 20 characters');
+export const newPasswordValidation = body("newPassword")
+    .exists().withMessage('Passwords is required')
+    .isString().withMessage('Passwords should be string')
+    .trim()
+    .notEmpty()
+    .isLength({min: 6, max: 20})
+    .withMessage('Password must be between 6 and 20 characters');
 export const emailValidation = body("email")
     .exists().withMessage('Email is required')
     .isString().withMessage('Email should be string')

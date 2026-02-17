@@ -247,7 +247,7 @@ export class AuthController {
   async newPassword(req: Request, res: Response) {
         try{
             const {newPassword, recoveryCode} = req.body;
-            const result =  await this.authService.newPassowrd(newPassword, recoveryCode);
+            const result =  await this.authService.newPassword(newPassword, recoveryCode);
             if(result.status!== ResultStatus.NoContent){
                 if (result.status === ResultStatus.BadRequest) {
                     return res.status(HttpStatus.BadRequest).json({

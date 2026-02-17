@@ -72,6 +72,7 @@ export class UsersRepository {
     }
     async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
         const normalizedEmail = normalizeEmail(email);
+        console.log("from userRepo",normalizedEmail);
         const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
         return user;
     }
