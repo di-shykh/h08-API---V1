@@ -3,12 +3,17 @@ import {DeleteResult, UpdateResult, WithId} from "mongodb";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {SessionRepository} from "../repositories/session.repository";
 import {JwtService} from "../../auth/application/jwt.service";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class SecurityService {
     jwtService: JwtService;
     sessionRepository: SessionRepository;
 
-    constructor(jwtService: JwtService,sessionRepository: SessionRepository) {
+    constructor(
+        @inject(JwtService) jwtService: JwtService,
+        @inject(SessionRepository) sessionRepository: SessionRepository
+    ) {
         this.jwtService = jwtService;
         this.sessionRepository = sessionRepository;
     }

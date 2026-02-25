@@ -2,12 +2,17 @@ import {PostsRepository} from "../repositories/posts.repository";
 import {PostAttributes} from "./dtos/post-attributs";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {BlogsRepository} from "../../blogs/repositories/blogs.repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class PostsService {
     postsRepository: PostsRepository;
     blogsRepository: BlogsRepository;
 
-    constructor(postsRepository: PostsRepository, blogsRepository: BlogsRepository) {
+    constructor(
+        @inject(PostsRepository) postsRepository: PostsRepository,
+        @inject(BlogsRepository) blogsRepository: BlogsRepository
+    ) {
         this.postsRepository = postsRepository;
         this.blogsRepository = blogsRepository;
     }

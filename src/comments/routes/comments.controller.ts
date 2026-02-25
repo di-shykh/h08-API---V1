@@ -7,12 +7,17 @@ import {ResultStatus} from "../../core/result/result.code";
 import {CommentInputDto} from "../application/dtos/comment.input-dto";
 import {CommentsQueryRepository} from "../repositories/comments.query-repository";
 import {CommentsService} from "../application/comment.services";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class CommentsController {
     commentsQueryRepository: CommentsQueryRepository;
     commentsService: CommentsService;
 
-    constructor(commentsQueryRepository: CommentsQueryRepository, commentsService: CommentsService) {
+    constructor(
+        @inject(CommentsQueryRepository) commentsQueryRepository: CommentsQueryRepository,
+        @inject(CommentsService) commentsService: CommentsService
+    ) {
         this.commentsQueryRepository = commentsQueryRepository;
         this.commentsService = commentsService;
     }

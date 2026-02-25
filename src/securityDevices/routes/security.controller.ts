@@ -6,12 +6,17 @@ import {ResultStatus} from "../../core/result/result.code";
 import {resultCodeToHttpException} from "../../core/result/resultCodeToHttpExeptions";
 import {SessionQueryRepository} from "../repositories/session.query-repository";
 import {SecurityService} from "../application/security.services";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class SecurityController {
     sessionQueryRepository: SessionQueryRepository;
     securityService: SecurityService;
 
-    constructor(sessionQueryRepository: SessionQueryRepository, securityService: SecurityService) {
+    constructor(
+        @inject(SessionQueryRepository) sessionQueryRepository: SessionQueryRepository,
+        @inject(SecurityService) securityService: SecurityService
+    ) {
         this.sessionQueryRepository = sessionQueryRepository;
         this.securityService = securityService;
     }

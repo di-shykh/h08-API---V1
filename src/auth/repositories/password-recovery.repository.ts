@@ -2,7 +2,9 @@ import {ObjectId, WithId} from "mongodb";
 import {passwordRecoveryCollection} from "../../db/mongo.bd";
 import {PasswordRecovery} from "../types/password-recovery";
 import {userCollection} from "../../db/mongo.bd";
+import { injectable } from 'inversify';
 
+@injectable()
 export class PasswordRecoveryRepository {
     async addPasswordRecoveryData(_id: ObjectId, recoveryCode: string, expirationDate:string): Promise<boolean> {
         try {

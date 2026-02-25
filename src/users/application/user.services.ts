@@ -3,14 +3,16 @@ import {UserDB} from "../routes/output/user.db";
 import {DuplicateFieldError} from "../../core/errors/duplicateField.error";
 import {BcryptService} from "../../auth/adapters/bcrypt.service";
 import {UsersRepository} from "../repositories/user.repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class UsersService {
     bcryptService: BcryptService;
     usersRepository: UsersRepository;
 
     constructor(
-        bcryptService: BcryptService,
-        usersRepository: UsersRepository,
+        @inject(BcryptService) bcryptService: BcryptService,
+        @inject(UsersRepository) usersRepository: UsersRepository,
     ) {
         this.bcryptService = bcryptService;
         this.usersRepository = usersRepository;

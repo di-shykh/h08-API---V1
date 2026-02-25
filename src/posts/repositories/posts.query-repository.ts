@@ -5,7 +5,9 @@ import {PostQueryInput} from "../routes/input/post-query.input";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {PostListPaginatedOutput} from "../routes/output/post-list-paginated.output";
 import {PostOutput} from "../routes/output/post-output";
+import { injectable } from 'inversify';
 
+@injectable()
 export class PostsQueryRepository {
     async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
         const filter: any = {'blogId': blogId};

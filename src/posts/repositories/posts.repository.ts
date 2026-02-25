@@ -4,7 +4,9 @@ import {postCollection} from "../../db/mongo.bd";
 import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {PostQueryInput} from "../routes/input/post-query.input";
+import { injectable } from 'inversify';
 
+@injectable()
 export class PostsRepository {
     async createPost(newPost: Post): Promise<string> {
         const insertPost = await postCollection.insertOne(newPost);

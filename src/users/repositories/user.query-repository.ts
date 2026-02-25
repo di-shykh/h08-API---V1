@@ -7,7 +7,9 @@ import {UserQueryInput} from "../routes/input/user-query.input";
 import {UserListPaginatedOutput} from "../routes/output/user-list-paginted.output";
 import {UserDB} from "../routes/output/user.db";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
+import { injectable } from 'inversify';
 
+@injectable()
 export class UsersQueryRepository {
     async findUserByIdOrFail(id: string): Promise<WithId<User>> {
         const user = await userCollection.findOne({_id: new ObjectId(id)});

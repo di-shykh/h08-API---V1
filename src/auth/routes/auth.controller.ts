@@ -12,7 +12,10 @@ import {JwtService} from "../application/jwt.service";
 import {SecurityService} from "../../securityDevices/application/security.services";
 import {SessionQueryRepository} from "../../securityDevices/repositories/session.query-repository";
 import {UsersQueryRepository} from "../../users/repositories/user.query-repository";
+import { injectable, inject } from 'inversify';
+import {UsersRepository} from "../../users/repositories/user.repository";
 
+@injectable()
 export class AuthController {
     authService: AuthService;
     jwtService: JwtService;
@@ -20,7 +23,13 @@ export class AuthController {
     sessionQueryRepository: SessionQueryRepository;
     usersQueryRepository: UsersQueryRepository;
 
-    constructor(authService: AuthService, jwtService: JwtService, securityService: SecurityService, sessionQueryRepository: SessionQueryRepository, usersQueryRepository: UsersQueryRepository) {
+    constructor(
+        @inject(AuthService) authService: AuthService,
+        @inject(JwtService) jwtService: JwtService,
+        @inject(SecurityService) securityService: SecurityService,
+        @inject(SessionQueryRepository) sessionQueryRepository: SessionQueryRepository,
+        @inject(UsersRepository) usersQueryRepository: UsersQueryRepository
+    ) {
         this.authService = authService;
         this.jwtService = jwtService;
         this.securityService = securityService;

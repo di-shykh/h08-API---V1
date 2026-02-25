@@ -1,7 +1,9 @@
 import {Session} from "../domain/session";
 import {sessionCollection} from "../../db/mongo.bd";
 import {DeleteResult, ObjectId, UpdateResult, WithId} from "mongodb";
+import { injectable } from 'inversify';
 
+@injectable()
 export class SessionRepository {
     async createSession(session: Session): Promise<string> {
         const insertResult = await sessionCollection.insertOne(session);

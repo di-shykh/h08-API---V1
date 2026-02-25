@@ -1,7 +1,9 @@
 import {Router} from "express";
 import {RefreshTokenGuard} from "../../auth/middlewares/refresh.token.guard";
-import {securityController} from "../../composition.root";
+import {container} from "../../inversify-ioc";
+import {SecurityController} from "./security.controller";
 
+const securityController = container.get(SecurityController);
 export const securityRouter: Router = Router({});
 
 securityRouter

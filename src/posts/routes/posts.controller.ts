@@ -17,7 +17,9 @@ import {PostsQueryRepository} from "../repositories/posts.query-repository";
 import {PostsService} from "../application/post.services";
 import {CommentsService} from "../../comments/application/comment.services";
 import {CommentsQueryRepository} from "../../comments/repositories/comments.query-repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class PostsController {
     postsQueryRepository: PostsQueryRepository;
     postsService: PostsService;
@@ -25,10 +27,10 @@ export class PostsController {
     commentsQueryRepository: CommentsQueryRepository;
 
     constructor(
-        postsQueryRepository: PostsQueryRepository,
-        postsService: PostsService,
-        commentsService: CommentsService,
-        commentsQueryRepository: CommentsQueryRepository
+        @inject(PostsQueryRepository) postsQueryRepository: PostsQueryRepository,
+        @inject(PostsService) postsService: PostsService,
+        @inject(CommentsService) commentsService: CommentsService,
+        @inject(CommentsQueryRepository) commentsQueryRepository: CommentsQueryRepository
     ) {
         this.postsQueryRepository = postsQueryRepository;
         this.postsService = postsService;

@@ -6,8 +6,10 @@ import {superAdminMiddleware} from "../../auth/middlewares/super-admin.guard-mid
 import {userCreateValidation} from "./user.input-dto.validation-middleware";
 import {idValidator} from "../../core/middlewares/validation/params-id.validation-middleware";
 import {query} from "express-validator";
-import {userController} from "../../composition.root";
+import {container} from "../../inversify-ioc";
+import {UserController} from "./user.controller";
 
+const userController = container.get(UserController);
 export const usersRouter: Router = Router({});
 
 usersRouter

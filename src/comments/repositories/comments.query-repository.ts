@@ -6,7 +6,9 @@ import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
 import {CommentQueryInput} from "../routes/input/comment-query.input";
 import {CommentListPaginatedOutput} from "../routes/output/comment-list-paginated.output";
+import { injectable } from 'inversify';
 
+@injectable()
 export class CommentsQueryRepository {
     async findCommentById(id: string): Promise<WithId<CommentDB>> {
         const result = await commentCollection.findOne({_id: new ObjectId(id)});

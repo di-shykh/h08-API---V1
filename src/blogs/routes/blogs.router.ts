@@ -8,8 +8,10 @@ import {BlogSortField} from "./input/blog-sort-field";
 import {PostSortField} from "../../posts/routes/input/post-sort-field";
 import {postCreateForBlogInputValidation} from "../../posts/routes/post.input-dto.validation-middlewares";
 import {blogExistingIdValidationMiddleware} from "./blog.existing-id-validation-middleware";
-import {blogsController} from "../../composition.root";
+import {container} from "../../inversify-ioc";
+import {BlogsController} from "./blogs.controller";
 
+const blogsController = container.get(BlogsController);
 export const blogsRouter: Router = Router({});
 
 blogsRouter

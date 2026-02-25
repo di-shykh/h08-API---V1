@@ -9,7 +9,9 @@ import {BlogsQueryRepository} from "../repositories/blogs.query-repository";
 import {BlogsService} from "../application/blog.service";
 import {PostsQueryRepository} from "../../posts/repositories/posts.query-repository";
 import {PostsService} from "../../posts/application/post.services";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class BlogsController {
     blogsQueryRepository: BlogsQueryRepository;
     blogsService: BlogsService;
@@ -17,10 +19,10 @@ export class BlogsController {
     postsService: PostsService;
 
     constructor(
-        blogsQueryRepository: BlogsQueryRepository,
-        blogsService: BlogsService,
-        postsQueryRepository: PostsQueryRepository,
-        postsService: PostsService,
+        @inject(BlogsQueryRepository) blogsQueryRepository: BlogsQueryRepository,
+        @inject(BlogsService) blogsService: BlogsService,
+        @inject(PostsQueryRepository) postsQueryRepository: PostsQueryRepository,
+        @inject(PostsService) postsService: PostsService,
     ) {
         this.blogsQueryRepository = blogsQueryRepository;
         this.blogsService = blogsService;

@@ -5,7 +5,9 @@ import {CommentInputDto} from "../application/dtos/comment.input-dto";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
+import { injectable } from 'inversify';
 
+@injectable()
 export class CommentsRepository {
     async createComment(comment: CommentDB): Promise<string> {
         const insertedComment = await commentCollection.insertOne(comment);

@@ -8,12 +8,17 @@ import {Post} from "../../posts/domain/post";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {CommentsRepository} from "../repositories/comments.repository";
 import {PostsRepository} from "../../posts/repositories/posts.repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class CommentsService {
     commentsRepository: CommentsRepository;
     postsRepository: PostsRepository;
 
-    constructor(commentsRepository: CommentsRepository, postsRepository: PostsRepository) {
+    constructor(
+        @inject(CommentsRepository) commentsRepository: CommentsRepository,
+        @inject(PostsRepository) postsRepository: PostsRepository
+    ) {
         this.commentsRepository = commentsRepository;
         this.postsRepository = postsRepository;
     }

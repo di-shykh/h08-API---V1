@@ -10,8 +10,10 @@ import {paginationAndSortingValidation} from "../../core/middlewares/validation/
 import {PostSortField} from "./input/post-sort-field";
 import {AccessTokenGuard} from "../../auth/middlewares/access.token.guard";
 import { commentInputValidation} from "../../comments/routes/comment.input-dto.validation-middleware";
-import {postsController} from "../../composition.root";
+import {PostsController} from "./posts.controller";
+import {container} from "../../inversify-ioc";
 
+const postsController = container.get(PostsController);
 export const postsRouter: Router = Router({});
 
 postsRouter

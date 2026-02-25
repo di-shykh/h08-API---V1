@@ -3,8 +3,10 @@ import {idValidator} from "../../core/middlewares/validation/params-id.validatio
 import {AccessTokenGuard} from "../../auth/middlewares/access.token.guard";
 import {commentInputValidation} from "./comment.input-dto.validation-middleware";
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validation.result.middleware";
-import {commentsController} from "../../composition.root";
+import {CommentsController} from "./comments.controller";
+import {container} from "../../inversify-ioc";
 
+const commentsController = container.get(CommentsController);
 export const commentsRouter: Router = Router({});
 commentsRouter
     .get(

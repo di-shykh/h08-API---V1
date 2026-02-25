@@ -7,12 +7,17 @@ import {errorHandler} from "../../core/errors/error.handler";
 import {UserOutput} from "./output/user-output";
 import {UsersQueryRepository} from "../repositories/user.query-repository";
 import {UsersService} from "../application/user.services";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class UserController {
     usersQueryRepository: UsersQueryRepository;
     usersService: UsersService;
 
-    constructor(usersQueryRepository: UsersQueryRepository, usersService: UsersService) {
+    constructor(
+        @inject(UsersQueryRepository) usersQueryRepository: UsersQueryRepository,
+        @inject(UsersService) usersService: UsersService
+    ) {
         this.usersQueryRepository = usersQueryRepository;
         this.usersService = usersService;
 

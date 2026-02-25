@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {Router} from "express";
 import {
     emailValidation,
@@ -10,8 +11,11 @@ import {AccessTokenGuard} from "../middlewares/access.token.guard";
 import {codeConfirmationValidation} from "../middlewares/validation/registration.input-validation";
 import {rateLimitGuard} from "../middlewares/rate-limiting.middleware";
 import {RefreshTokenGuard} from "../middlewares/refresh.token.guard"
-import {authController} from "../../composition.root"
 import {recoveryCodeValidation} from "../middlewares/validation/password-recovery-code.validation";
+import {container} from "../../inversify-ioc";
+import {AuthController} from "./auth.controller";
+
+const authController = container.get(AuthController);
 export const authRouter: Router = Router({});
 
 authRouter

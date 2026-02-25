@@ -1,0 +1,60 @@
+import 'reflect-metadata';
+import { Container } from 'inversify';
+
+import {BcryptService} from "./auth/adapters/bcrypt.service";
+import {EmailAdapter} from "./auth/adapters/email.adapter";
+import {AuthService} from "./auth/application/auth.service";
+import {JwtService} from "./auth/application/jwt.service";
+import {AuthController} from "./auth/routes/auth.controller";
+import {SecurityService} from "./securityDevices/application/security.services";
+import {SessionQueryRepository} from "./securityDevices/repositories/session.query-repository";
+import {SessionRepository} from "./securityDevices/repositories/session.repository";
+import {SecurityController} from "./securityDevices/routes/security.controller";
+import {UsersService} from "./users/application/user.services";
+import {UsersQueryRepository} from "./users/repositories/user.query-repository";
+import {UsersRepository} from "./users/repositories/user.repository";
+import {UserController} from "./users/routes/user.controller";
+import {BlogsService} from "./blogs/application/blog.service";
+import {BlogsQueryRepository} from "./blogs/repositories/blogs.query-repository";
+import {BlogsRepository} from "./blogs/repositories/blogs.repository";
+import {BlogsController} from "./blogs/routes/blogs.controller";
+import {CommentsController} from "./comments/routes/comments.controller";
+import {CommentsService} from "./comments/application/comment.services";
+import {CommentsQueryRepository} from "./comments/repositories/comments.query-repository";
+import {CommentsRepository} from "./comments/repositories/comments.repository";
+import {PostsController} from "./posts/routes/posts.controller";
+import {PostsQueryRepository} from "./posts/repositories/posts.query-repository";
+import {PostsRepository} from "./posts/repositories/posts.repository";
+import {PostsService} from "./posts/application/post.services";
+import {PasswordRecoveryRepository} from "./auth/repositories/password-recovery.repository";
+
+export const container: Container = new Container();
+
+container.bind(BcryptService).to(BcryptService);
+container.bind(UsersService).to(UsersService);
+container.bind(BlogsService).to(BlogsService);
+container.bind(JwtService).to(JwtService);
+container.bind(AuthService).to(AuthService);
+container.bind(SecurityService).to(SecurityService);
+container.bind(PostsService).to(PostsService);
+container.bind(EmailAdapter).to(EmailAdapter);
+container.bind(CommentsService).to(CommentsService);
+
+container.bind(AuthController).to(AuthController);
+container.bind(BlogsController).to(BlogsController);
+container.bind(CommentsController).to(CommentsController);
+container.bind(PostsController).to(PostsController);
+container.bind(SecurityController).to(SecurityController);
+container.bind(UserController).to(UserController);
+
+container.bind(SessionQueryRepository).to(SessionQueryRepository);
+container.bind(SessionRepository).to(SessionRepository);
+container.bind(UsersQueryRepository).to(UsersQueryRepository);
+container.bind(BlogsQueryRepository).to(BlogsQueryRepository);
+container.bind(CommentsQueryRepository).to(CommentsQueryRepository);
+container.bind(PostsQueryRepository).to(PostsQueryRepository);
+container.bind(UsersRepository).to(UsersRepository);
+container.bind(BlogsRepository).to(BlogsRepository);
+container.bind(PostsRepository).to(PostsRepository);
+container.bind(CommentsRepository).to(CommentsRepository);
+container.bind(PasswordRecoveryRepository).to(PasswordRecoveryRepository);

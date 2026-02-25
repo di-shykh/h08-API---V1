@@ -4,12 +4,17 @@ import {Blog} from "../types/blog";
 import {BlogAttributes} from "./dtos/blog-attributes";
 import {Post} from "../../posts/domain/post";
 import {PostsRepository} from "../../posts/repositories/posts.repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class BlogsService {
     blogsRepository: BlogsRepository;
     postsRepository: PostsRepository;
 
-    constructor(blogsRepository: BlogsRepository, postsRepository: PostsRepository) {
+    constructor(
+        @inject(BlogsRepository) blogsRepository: BlogsRepository,
+        @inject(PostsRepository) postsRepository: PostsRepository
+    ) {
         this.blogsRepository = blogsRepository;
         this.postsRepository = postsRepository;
     }

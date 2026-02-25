@@ -3,7 +3,9 @@ import {userCollection} from "../../db/mongo.bd";
 import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
+import { injectable } from 'inversify';
 
+@injectable()
 export class UsersRepository {
     async createUser(newUser: UserDB): Promise<string> {
         const insertedUser = await userCollection.insertOne(newUser);

@@ -12,7 +12,9 @@ import {JwtService} from "./jwt.service";
 import {SessionRepository} from "../../securityDevices/repositories/session.repository";
 import {UsersRepository} from "../../users/repositories/user.repository";
 import {PasswordRecoveryRepository} from "../repositories/password-recovery.repository";
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class AuthService {
     bcryptService: BcryptService;
     jwtService: JwtService;
@@ -21,12 +23,12 @@ export class AuthService {
     usersRepository: UsersRepository;
     passwordRecoveryRepository: PasswordRecoveryRepository;
     constructor(
-        bcryptService: BcryptService,
-        jwtService: JwtService,
-        emailAdapter: EmailAdapter,
-        sessionRepository: SessionRepository,
-        usersRepository: UsersRepository,
-        passwordRecoveryRepository: PasswordRecoveryRepository
+        @inject(BcryptService) bcryptService: BcryptService,
+        @inject(JwtService) jwtService: JwtService,
+        @inject(EmailAdapter) emailAdapter: EmailAdapter,
+        @inject(SessionRepository) sessionRepository: SessionRepository,
+        @inject(UsersRepository) usersRepository: UsersRepository,
+        @inject(PasswordRecoveryRepository) passwordRecoveryRepository: PasswordRecoveryRepository
     ) {
         this.bcryptService = bcryptService;
         this.jwtService = jwtService;

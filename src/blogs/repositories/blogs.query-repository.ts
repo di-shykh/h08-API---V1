@@ -5,7 +5,9 @@ import {blogCollection} from "../../db/mongo.bd";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {BlogListPaginatedOutput} from "../routes/output/blog-list-paginated.output";
 import {BlogOutput} from "../routes/output/blog.output";
+import { injectable } from 'inversify';
 
+@injectable()
 export class BlogsQueryRepository {
     async findBlogById(id: string):Promise<WithId<Blog> | null> {
         return blogCollection.findOne({_id: new ObjectId(id)})

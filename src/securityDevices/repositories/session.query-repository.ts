@@ -2,7 +2,9 @@ import {sessionCollection} from "../../db/mongo.bd";
 import {Session} from "../domain/session";
 import {WithId} from "mongodb";
 import {SessionOutput} from "../routes/output/session-output";
+import { injectable } from 'inversify';
 
+@injectable()
 export class SessionQueryRepository {
     async getSession(deviceId: string, userId: string): Promise<WithId<Session>|null> {
         const session = await sessionCollection.findOne({deviceId, userId});
