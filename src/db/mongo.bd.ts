@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Collection, Db, MongoClient } from 'mongodb';
 import { Blog } from '../blogs/types/blog'
 import { Post } from '../posts/domain/post';
@@ -27,8 +28,16 @@ export let rateLimitCollection: Collection<RateLimit>;
 export let passwordRecoveryCollection: Collection<PasswordRecovery>;
 
 // Подключения к бд
-export async function runDB(url: string): Promise<void> {
-    client = new MongoClient(url);
+export async function runDB(): Promise<void> {
+    try {
+        await mongoose.connect(SETTINGS.MONGO_URL);
+       console.log("MongoDB Connected");
+    }
+    catch (error) {
+        console.log("No connection.");
+        await mongoose.disconnect();
+    }
+    client = new MongoClient(SETTINGS.MONGO_URL);
     const db: Db = client.db(SETTINGS.DB_NAME);
 
     try {

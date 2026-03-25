@@ -1,31 +1,34 @@
 import {UserDB} from "../routes/output/user.db";
-import {userCollection} from "../../db/mongo.bd";
-import {ObjectId, WithId} from "mongodb";
+//import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import { injectable } from 'inversify';
+import mongoose from 'mongoose';
+import {UserDocument, UserModel} from "../domain/user.entity";
 
 @injectable()
 export class UsersRepository {
+    async save(user: UserDocument): Promise<void>  {
+        await user.save();
+    }
     async createUser(newUser: UserDB): Promise<string> {
-        const insertedUser = await userCollection.insertOne(newUser);
-        return insertedUser.insertedId.toString();
+        const insertedUser = await UserModel.create(newUser);
+        return insertedUser._id.toString();
     }
     async deleteUser(id: string): Promise<void> {
-        const deletedUser = await userCollection.deleteOne({_id: new ObjectId(id)});
+        const deletedUser = await UserModel.deleteOne({_id: new mongoose.Types.ObjectId(id)});
         if(deletedUser.deletedCount<1) {
             throw new RepositoryNotFoundError("User not found");
         }
         return;
     }
-
-    async confirmEmail(code: string): Promise<boolean|null> {
+    async confirmEmail(code: string): Promise<boolean | null> {
         try {
-            const result = await userCollection.updateOne(
+            const result = await UserModel.updateOne(
                 {"emailConfirmation.confirmationCode" : code},
                 { $set: {
                         "emailConfirmation.isConfirmed" : true,
-                        "emailConfirmation.confirmationCode": null
+                        "emailConfirmation.confirmationCode": ''
                     }
                 }
             );
@@ -35,9 +38,13 @@ export class UsersRepository {
             return false;
         }
     }
-    async updateUserEmailConfirmation(_id: ObjectId, confirmationCode: string, expirationDate: string): Promise<boolean|null> {
+    async updateUserEmailConfirmation(
+        _id: mongoose.Types.ObjectId,
+        confirmationCode: string,
+        expirationDate: string
+    ): Promise<boolean|null> {
         try {
-            const result = await userCollection.updateOne(
+            const result = await UserModel.updateOne(
                 {_id: _id},
                 {
                     $set: {
@@ -52,35 +59,32 @@ export class UsersRepository {
             return false;
         }
     }
-    async findByLoginOrEmail(loginOrEmail: string): Promise<WithId<UserDB>|null> {
+    async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument|null> {
         const normalizedEmail = normalizeEmail(loginOrEmail);
-        return await userCollection.findOne({
+        return UserModel.findOne({
             $or: [{login: loginOrEmail }, { email: normalizedEmail }],
         });
     }
-    async isEmailUnique(email: string): Promise<Boolean> {
+    async isEmailUnique(email: string): Promise<boolean> {
         const normalizedEmail = normalizeEmail(email);
-        const user = await userCollection.findOne({email: normalizedEmail});
+        const user = await UserModel.findOne({email: normalizedEmail}).lean();
         return !user;
     }
-    async isLoginUnique(login: string): Promise<Boolean> {
+    async isLoginUnique(login: string): Promise<boolean> {
         const loginUser = login.trim();
-        const user = await userCollection.findOne({login: loginUser});
+        const user = await UserModel.findOne({login: loginUser}).lean();
         return !user;
     }
-    async findByConfirmationCode(code: string): Promise<WithId<UserDB>| null> {
-        const user: WithId<UserDB>|null = await userCollection.findOne({"emailConfirmation.confirmationCode": code});
-        return user;
+    async findByConfirmationCode(code: string): Promise<UserDocument | null> {
+        return UserModel.findOne({"emailConfirmation.confirmationCode": code});
     }
-    async findUserByEmail(email: string): Promise<WithId<UserDB>| null> {
+    async findUserByEmail(email: string): Promise<UserDocument | null> {
         const normalizedEmail = normalizeEmail(email);
-        console.log("from userRepo",normalizedEmail);
-        const user: WithId<UserDB>|null = await userCollection.findOne({"email":normalizedEmail})
-        return user;
+        return UserModel.findOne({"email":normalizedEmail});
     }
     async saveNewPassword(userId: string, newPasswordHash: string): Promise<boolean> {
-        const result = await userCollection.updateOne(
-            {_id: new ObjectId(userId)},
+        const result = await UserModel.updateOne(
+            {_id: new mongoose.Types.ObjectId(userId)},
             {
                 $set: {
                     "passwordHash": newPasswordHash,
