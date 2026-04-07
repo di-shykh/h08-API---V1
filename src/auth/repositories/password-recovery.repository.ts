@@ -1,21 +1,22 @@
-import {ObjectId, WithId} from "mongodb";
 import {passwordRecoveryCollection} from "../../db/mongo.bd";
 import {PasswordRecovery} from "../types/password-recovery";
-import {userCollection} from "../../db/mongo.bd";
 import { injectable } from 'inversify';
+import {PasswordRecoveryDocument, PasswordRecoveryModel } from "../domain/password-recovery.entity";
+import {UserModel} from "../../users/domain/user.entity"
 
 @injectable()
 export class PasswordRecoveryRepository {
-    async addPasswordRecoveryData(_id: ObjectId, recoveryCode: string, expirationDate:string): Promise<boolean> {
+    async save(passwordRecovery: PasswordRecoveryDocument): Promise<void> {
+        await passwordRecovery.save();
+    }
+    async addPasswordRecoveryData(_id: string, passwordRecoveryData: PasswordRecovery): Promise<boolean> {
         try {
+            const passwordRecovery = new PasswordRecoveryModel(passwordRecoveryData);
+            await this.save(passwordRecovery);
             const result = await passwordRecoveryCollection.updateOne(
                 {userId: _id.toString()},
                 {
                     $set: {
-                        userId: _id.toString(),
-                        "isUsed": false,
-                        "passwordRecoveryCode": recoveryCode,
-                        "passwordRecoveryExpiration": expirationDate,
                         createdAt: new Date().toISOString()
                     }
                 },
@@ -27,12 +28,12 @@ export class PasswordRecoveryRepository {
             return false;
         }
     }
-    async findCode(recoveryCode: string): Promise<WithId<PasswordRecovery>|null> {
-        return await passwordRecoveryCollection.findOne({passwordRecoveryCode: recoveryCode});
+    async findCode(recoveryCode: string): Promise<PasswordRecoveryDocument|null> {
+        return PasswordRecoveryModel.findOne({passwordRecoveryCode: recoveryCode});
     }
     async changeStatusRecoveryCode(recoveryCode: string): Promise<void> {
         try {
-            await passwordRecoveryCollection.updateOne(
+            await PasswordRecoveryModel.updateOne(
                 {passwordRecoveryCode: recoveryCode},
                 {
                     $set: {
@@ -46,9 +47,9 @@ export class PasswordRecoveryRepository {
         }
     }
     async findCodeByEmail(email: string): Promise<string | null> {
-        const user = await userCollection.findOne({ email });
+        const user = await UserModel.findOne({ email });
         if (!user) return null;
-        const recovery = await passwordRecoveryCollection.findOne({ userId: user._id.toString() });
+        const recovery = await PasswordRecoveryModel.findOne({ userId: user._id.toString() });
         return recovery?.passwordRecoveryCode || null;
     }
 }

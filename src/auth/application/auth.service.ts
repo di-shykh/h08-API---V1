@@ -13,6 +13,9 @@ import {SessionRepository} from "../../securityDevices/repositories/session.repo
 import {UsersRepository} from "../../users/repositories/user.repository";
 import {PasswordRecoveryRepository} from "../repositories/password-recovery.repository";
 import { inject, injectable } from 'inversify';
+import {PasswordRecovery} from "../types/password-recovery";
+import {PasswordRecoveryDocument} from "../domain/password-recovery.entity";
+import {UserDocument} from "../../users/domain/user.entity";
 
 @injectable()
 export class AuthService {
@@ -39,7 +42,7 @@ export class AuthService {
     }
 
     async loginUser(loginOrEmail: string, password: string, deviceName: string, ipAddress: string): Promise<{accessToken: string, refreshToken: string}|null> {
-        const user: WithId<UserDB>|null = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
+        const user: UserDocument|null = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
         if (!user) return null;
         const result = await this.bcryptService.checkPassword(password, user.passwordHash);
         if (!result) return null;
@@ -58,7 +61,7 @@ export class AuthService {
             iat: new Date(iat*1000),
             exp: new Date(Date.now()+20000),
         };
-        const sessionId = await this.sessionRepository.createSession(session);
+        const sessionId = await this.sessionRepository.createSession(session);//todo!
         if (!sessionId) return null;
         return {accessToken, refreshToken};
     }
@@ -103,7 +106,7 @@ export class AuthService {
         if (!code || code.length !== 36) { // UUID v4 имеет 36 символов
             return ResultObject.BadRequest('code', 'Invalid confirmation code format');
         }
-        const user: WithId<UserDB>|null = await this.usersRepository.findByConfirmationCode(code);
+        const user: UserDocument|null = await this.usersRepository.findByConfirmationCode(code);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('code', 'Code does not exist');
         }
@@ -115,14 +118,17 @@ export class AuthService {
         if(isAfter(dateNow,expirationDate)){
             return ResultObject.BadRequest('code', 'Code expired');
         }
-        const result = await this.usersRepository.confirmEmail(code);
-        if(!result){
+        user.emailConfirmation.isConfirmed = true;
+        user.emailConfirmation.confirmationCode = '';
+        try {
+            await this.usersRepository.save(user);
+        } catch(err){
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
-        return ResultObject.Success(result);
+        return ResultObject.Success(true);
     }
     async resendEmail(email: string): Promise<Result<boolean|null>> {
-        const user: WithId<UserDB>|null = await this.usersRepository.findUserByEmail(email);
+        const user: UserDocument|null = await this.usersRepository.findUserByEmail(email);
         if(!user||!user.emailConfirmation) {
             return ResultObject.BadRequest('email', 'User with this email is not exists');
         }
@@ -134,8 +140,10 @@ export class AuthService {
 
         try{
             await this.emailAdapter.resendEmail(email,confirmationCode);
-            const result = await this.usersRepository.updateUserEmailConfirmation(user._id, confirmationCode, expirationDate);
-            return ResultObject.Success(result);
+            user.emailConfirmation.confirmationCode= confirmationCode;
+            user.emailConfirmation.expirationDate = expirationDate;
+            await this.usersRepository.save(user);
+            return ResultObject.Success(true);
         } catch (e) {
             return ResultObject.BadRequest('email', 'Email wasn\'t confirmed');
         }
@@ -147,8 +155,14 @@ export class AuthService {
             return ResultObject.NoContent();
         }
         const recoveryCode: string = uuidv4();
-        const expirationDate: string = addHours(new Date(), 24).toISOString();
-        const recoveryResult = await this.passwordRecoveryRepository.addPasswordRecoveryData(user._id, recoveryCode, expirationDate);
+        const expirationDate: Date = addHours(new Date(), 24);
+        const passportRecoveryData: PasswordRecovery = {
+            userId: user._id.toString(),
+            isUsed: false,
+            passwordRecoveryCode: recoveryCode,
+            passwordRecoveryExpiration: expirationDate,
+        }
+        const recoveryResult = await this.passwordRecoveryRepository.addPasswordRecoveryData(user._id.toString(), passportRecoveryData);
         if(!recoveryResult){
             return ResultObject.BadRequest('email', 'Failed to save recovery code');
         }
@@ -173,7 +187,8 @@ export class AuthService {
         if(!result){
             return ResultObject.BadRequest('recoveryCode', 'User with this recovery code is not exist');
         }
-        await this.passwordRecoveryRepository.changeStatusRecoveryCode(recoveryCode);
+        recoveryResult.isUsed = true;
+        await this.passwordRecoveryRepository.save(recoveryResult);
         return ResultObject.NoContent();
     }
 }

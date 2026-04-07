@@ -28,9 +28,10 @@ export let rateLimitCollection: Collection<RateLimit>;
 export let passwordRecoveryCollection: Collection<PasswordRecovery>;
 
 // Подключения к бд
-export async function runDB(): Promise<void> {
+export async function runDB(url?: string): Promise<void> {
     try {
-        await mongoose.connect(SETTINGS.MONGO_URL);
+        const mongoUrl = url || SETTINGS.MONGO_URL;
+        await mongoose.connect(mongoUrl);
        console.log("MongoDB Connected");
     }
     catch (error) {

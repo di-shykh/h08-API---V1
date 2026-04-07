@@ -1,5 +1,4 @@
 import {UserDB} from "../routes/output/user.db";
-//import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import { injectable } from 'inversify';
@@ -16,48 +15,11 @@ export class UsersRepository {
         return insertedUser._id.toString();
     }
     async deleteUser(id: string): Promise<void> {
-        const deletedUser = await UserModel.deleteOne({_id: new mongoose.Types.ObjectId(id)});
+        const deletedUser = await UserModel.deleteOne({_id: id});
         if(deletedUser.deletedCount<1) {
             throw new RepositoryNotFoundError("User not found");
         }
         return;
-    }
-    async confirmEmail(code: string): Promise<boolean | null> {
-        try {
-            const result = await UserModel.updateOne(
-                {"emailConfirmation.confirmationCode" : code},
-                { $set: {
-                        "emailConfirmation.isConfirmed" : true,
-                        "emailConfirmation.confirmationCode": ''
-                    }
-                }
-            );
-            return result.modifiedCount === 1;
-        } catch (error) {
-            console.error("Error confirming email:", error);
-            return false;
-        }
-    }
-    async updateUserEmailConfirmation(
-        _id: mongoose.Types.ObjectId,
-        confirmationCode: string,
-        expirationDate: string
-    ): Promise<boolean|null> {
-        try {
-            const result = await UserModel.updateOne(
-                {_id: _id},
-                {
-                    $set: {
-                        "emailConfirmation.confirmationCode": confirmationCode,
-                        "emailConfirmation.expirationDate": expirationDate
-                    }
-                }
-            );
-            return result.modifiedCount === 1;
-        } catch (error) {
-            console.error("Error updating email confirmation:", error);
-            return false;
-        }
     }
     async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument|null> {
         const normalizedEmail = normalizeEmail(loginOrEmail);
@@ -84,7 +46,7 @@ export class UsersRepository {
     }
     async saveNewPassword(userId: string, newPasswordHash: string): Promise<boolean> {
         const result = await UserModel.updateOne(
-            {_id: new mongoose.Types.ObjectId(userId)},
+            {_id: userId},
             {
                 $set: {
                     "passwordHash": newPasswordHash,

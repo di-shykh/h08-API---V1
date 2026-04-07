@@ -14,6 +14,7 @@ import {SessionQueryRepository} from "../../securityDevices/repositories/session
 import {UsersQueryRepository} from "../../users/repositories/user.query-repository";
 import { injectable, inject } from 'inversify';
 import {UsersRepository} from "../../users/repositories/user.repository";
+import {UserDocument} from "../../users/domain/user.entity";
 
 @injectable()
 export class AuthController {
@@ -64,8 +65,8 @@ export class AuthController {
               return res.sendStatus(HttpStatus.Unauthorized);
           }
           const userId: string = req.userId;
-          const user: WithId<User> = await this.usersQueryRepository.findUserByIdOrFail(userId);
-          const userOutput: UserOutput = await this.usersQueryRepository.mapToUserOutput(user);
+          const user: UserDocument = await this.usersQueryRepository.findUserByIdOrFail(userId);
+          const userOutput: UserOutput = this.usersQueryRepository.mapToUserOutput(user);
           const {id,createdAt, ...userWithoutCreatedAt} = userOutput;
           const responseData = {
               ...userWithoutCreatedAt,

@@ -1,4 +1,3 @@
-import {User} from "../domain/user";
 import {UserDB} from "../routes/output/user.db";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {UserOutput} from "../routes/output/user-output";
@@ -11,13 +10,13 @@ import mongoose from "mongoose";
 @injectable()
 export class UsersQueryRepository {
     async findUserByIdOrFail(id: string): Promise<UserDocument> {
-        const user = await UserModel.findOne({_id: new mongoose.Types.ObjectId(id)});
+        const user = await UserModel.findOne({_id: id});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
         return user;
     }
-    async findManyUsers(queryDto: UserQueryInput): Promise<{items: <UserDB>[], totalCount: number}> {
+    async findManyUsers(queryDto: UserQueryInput): Promise<{items: UserDocument[], totalCount: number}> {
         const {
             pageNumber,
             pageSize,
@@ -42,16 +41,15 @@ export class UsersQueryRepository {
         else if(searchEmailTerm) {
             filter.email = { $regex: searchEmailTerm, $options: "i" };
         }
-        const items: <UserDB>[] = await UserModel
+        const items: UserDocument[] = await UserModel
             .find(filter)
             .sort({[sortBy]: sortDirection})
             .skip(skip)
-            .limit(pageSize)
-            .lean();
+            .limit(pageSize);
         const totalCount = await UserModel.countDocuments(filter);
         return {items, totalCount};
     }
-    mapToUserOutput(user: WithId<User>): UserOutput {
+    mapToUserOutput(user: UserDocument): UserOutput {
         return {
             id: user._id.toString(),
             login: user.login,
@@ -60,7 +58,7 @@ export class UsersQueryRepository {
         }
     }
     mapToUserListPaginatedOutput(
-        users: WithId<User>[],
+        users: UserDocument[],
         pageNumber: number,
         pageSize: number,
         totalCount: number,
