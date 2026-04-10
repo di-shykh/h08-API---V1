@@ -1,5 +1,4 @@
 import {UserCreateInput} from "../routes/input/create-user.input";
-import {UserDB} from "../routes/output/user.db";
 import {DuplicateFieldError} from "../../core/errors/duplicateField.error";
 import {BcryptService} from "../../auth/adapters/bcrypt.service";
 import {UsersRepository} from "../repositories/user.repository";

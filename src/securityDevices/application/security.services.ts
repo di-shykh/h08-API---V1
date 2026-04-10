@@ -4,6 +4,7 @@ import {Result, ResultObject} from "../../core/result/result.type";
 import {SessionRepository} from "../repositories/session.repository";
 import {JwtService} from "../../auth/application/jwt.service";
 import { inject, injectable } from 'inversify';
+import {SessionDocument} from "../domain/session.entity";
 
 @injectable()
 export class SecurityService {
@@ -18,10 +19,13 @@ export class SecurityService {
         this.sessionRepository = sessionRepository;
     }
 
-    async refreshToken(session: WithId<Session>): Promise<Result<{
+    async refreshToken(session: SessionDocument): Promise<Result<{
         accessToken: string;
         refreshToken: string;
     } | null>> {
+        if (session.exp && new Date() > session.exp) {
+            return ResultObject.Unauthorized();
+        }
        const tokenResult = await this.jwtService.createToken(session.userId, session.deviceId);
        const payload = await this.jwtService.verifyTokenFull(tokenResult.refreshToken);
        if (!payload) {
@@ -34,11 +38,14 @@ export class SecurityService {
        if (!iat) {
            return ResultObject.Unauthorized();
        }
-       const result: UpdateResult = await this.sessionRepository.updateSession(session._id.toString(), iat);
-       if(result.matchedCount<1) {
-           return ResultObject.Unauthorized();
-       }
-       return ResultObject.Success(tokenResult);
+       session.iat = iat;
+        try{
+            await this.sessionRepository.save(session);
+            return ResultObject.Success(tokenResult);
+        } catch(err) {
+            console.log('Failed to update session:', err);
+            return ResultObject.Unauthorized();
+        }
     }
     async deleteSession(id: string): Promise<Result> {
        const result: DeleteResult = await this.sessionRepository.deleteSession(id);

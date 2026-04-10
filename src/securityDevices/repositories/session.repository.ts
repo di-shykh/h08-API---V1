@@ -1,42 +1,28 @@
 import {Session} from "../domain/session";
-import {sessionCollection} from "../../db/mongo.bd";
-import {DeleteResult, ObjectId, UpdateResult, WithId} from "mongodb";
+import {DeleteResult, UpdateResult} from "mongodb";
 import { injectable } from 'inversify';
+import {SessionDocument, SessionModel} from "../domain/session.entity";
 
 @injectable()
 export class SessionRepository {
-    async createSession(session: Session): Promise<string> {
-        const insertResult = await sessionCollection.insertOne(session);
-        return insertResult.insertedId.toString();
+    async save(session: SessionDocument): Promise<void> {
+        await session.save();
     }
     async deleteSession(id: string): Promise<DeleteResult> {
-        const deletedSession = await sessionCollection.deleteOne({_id: new ObjectId(id)});
+        const deletedSession = await SessionModel.deleteOne({_id: id});
         return deletedSession
 
     }
-    async updateSession(id: string, iat: Date): Promise<UpdateResult> {
-        const updatedSession = await sessionCollection.updateOne(
-            {
-                _id: new ObjectId(id),
-            },
-            {
-                $set: {
-                    iat: iat,
-                },
-            },
-        );
-        return updatedSession;
-    }
-    async findByDeviceId(deviceId: string): Promise<WithId<Session>|null> {
-        const session: WithId<Session>|null = await sessionCollection.findOne({deviceId});
+    async findByDeviceId(deviceId: string): Promise<SessionDocument|null> {
+        const session: SessionDocument|null = await SessionModel.findOne({deviceId});
         return session;
     }
     async deleteSessionForDevice(deviceId: string): Promise<DeleteResult> {
-        const deletedSession = await sessionCollection.deleteOne({deviceId});
+        const deletedSession = await SessionModel.deleteOne({deviceId});
         return deletedSession;
     }
     async deleteSessionList(userId: string, deviceId: string): Promise<DeleteResult> {
-        const deletedSessionList = await sessionCollection.deleteMany({
+        const deletedSessionList = await SessionModel.deleteMany({
             userId: userId,
             deviceId: {$ne: deviceId},
         });

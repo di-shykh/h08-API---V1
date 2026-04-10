@@ -1,26 +1,24 @@
-import {sessionCollection} from "../../db/mongo.bd";
-import {Session} from "../domain/session";
-import {WithId} from "mongodb";
 import {SessionOutput} from "../routes/output/session-output";
 import { injectable } from 'inversify';
+import {SessionDocument, SessionModel} from "../domain/session.entity";
 
 @injectable()
 export class SessionQueryRepository {
-    async getSession(deviceId: string, userId: string): Promise<WithId<Session>|null> {
-        const session = await sessionCollection.findOne({deviceId, userId});
+    async getSession(deviceId: string, userId: string): Promise<SessionDocument|null> {
+        const session = await SessionModel.findOne({deviceId, userId});
         if (!session) {
             return null;
         }
         return session;
     }
-    async getSessionsByUserId(userId: string): Promise<WithId<Session>[]|null> {
-        return await sessionCollection.find({userId}).toArray();
+    async getSessionsByUserId(userId: string): Promise<SessionDocument[]> {
+        return SessionModel.find({userId});
     }
-    async mapToSessionOutput(sessions: WithId<Session>[]): Promise<SessionOutput[]|null> {
+    async mapToSessionOutput(sessions: SessionDocument[]): Promise<SessionOutput[]|null> {
         if (!sessions || sessions.length===0) {
             return null;
         }
-        return sessions.map((session: WithId<Session>) => {
+        return sessions.map((session: SessionDocument) => {
             return {
                 ip: session.ipAddress,
                 title: session.deviceName,

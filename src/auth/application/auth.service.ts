@@ -16,6 +16,7 @@ import { inject, injectable } from 'inversify';
 import {PasswordRecovery} from "../types/password-recovery";
 import {PasswordRecoveryDocument} from "../domain/password-recovery.entity";
 import {UserDocument} from "../../users/domain/user.entity";
+import {SessionModel} from "../../securityDevices/domain/session.entity";
 
 @injectable()
 export class AuthService {
@@ -61,9 +62,14 @@ export class AuthService {
             iat: new Date(iat*1000),
             exp: new Date(Date.now()+20000),
         };
-        const sessionId = await this.sessionRepository.createSession(session);//todo!
-        if (!sessionId) return null;
-        return {accessToken, refreshToken};
+        const newSession = new SessionModel(session);
+        try {
+            await this.sessionRepository.save(newSession);
+            return {accessToken, refreshToken};
+        } catch (error) {
+            console.log('Failed to create session: ',error);
+            return null;
+        }
     }
     async createUser(userInputDto: UserCreateInput): Promise<Result<string|null>> {
 
