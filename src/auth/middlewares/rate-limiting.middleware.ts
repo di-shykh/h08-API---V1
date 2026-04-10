@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import {HttpStatus} from "../../core/types/http-statuses";
 import {errorHandler} from "../../core/errors/error.handler";
-import {rateLimitCollection} from "../../db/mongo.bd";
-import {InsertOneResult} from "mongodb";
-import {RateLimit} from "../types/rate-limit";
+import {RateLimitDocument, RateLimitModel} from "../domain/rate-limit.entity";
 
 export const rateLimitGuard= async (req: Request, res: Response, next: NextFunction)=> {
     try {
@@ -19,7 +17,7 @@ export const rateLimitGuard= async (req: Request, res: Response, next: NextFunct
 
 
 
-        const requestsCount: number = await rateLimitCollection.countDocuments({
+        const requestsCount: number = await RateLimitModel.countDocuments({
             ip, url, date: {$gte: timeLimit}
         });
 
@@ -29,13 +27,13 @@ export const rateLimitGuard= async (req: Request, res: Response, next: NextFunct
             });
         }
 
-        await rateLimitCollection.deleteMany({
+        await RateLimitModel.deleteMany({
             date: { $lt: deleteTimeLimit }
         });
 
-        const result: InsertOneResult<RateLimit> = await rateLimitCollection.insertOne({ip, url, date});
+        const result: RateLimitDocument = await RateLimitModel.create({ip, url, date});
 
-        if(!result.insertedId){
+        if(!result._id){
             return res.sendStatus(HttpStatus.InternalServerError);
         }
 

@@ -14,7 +14,7 @@ import {UsersRepository} from "../../users/repositories/user.repository";
 import {PasswordRecoveryRepository} from "../repositories/password-recovery.repository";
 import { inject, injectable } from 'inversify';
 import {PasswordRecovery} from "../types/password-recovery";
-import {PasswordRecoveryDocument} from "../domain/password-recovery.entity";
+import {PasswordRecoveryDocument, PasswordRecoveryModel} from "../domain/password-recovery.entity";
 import {UserDocument} from "../../users/domain/user.entity";
 import {SessionModel} from "../../securityDevices/domain/session.entity";
 

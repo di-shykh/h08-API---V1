@@ -1,4 +1,3 @@
-import {passwordRecoveryCollection} from "../../db/mongo.bd";
 import {PasswordRecovery} from "../types/password-recovery";
 import { injectable } from 'inversify';
 import {PasswordRecoveryDocument, PasswordRecoveryModel } from "../domain/password-recovery.entity";
@@ -13,7 +12,7 @@ export class PasswordRecoveryRepository {
         try {
             const passwordRecovery = new PasswordRecoveryModel(passwordRecoveryData);
             await this.save(passwordRecovery);
-            const result = await passwordRecoveryCollection.updateOne(
+            const result = await PasswordRecoveryModel.updateOne(
                 {userId: _id.toString()},
                 {
                     $set: {
