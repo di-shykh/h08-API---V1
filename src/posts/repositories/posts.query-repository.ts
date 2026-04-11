@@ -1,17 +1,15 @@
-import {ObjectId, WithId} from "mongodb";
-import {Post} from "../domain/post";
-import {postCollection} from "../../db/mongo.bd";
 import {PostQueryInput} from "../routes/input/post-query.input";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {PostListPaginatedOutput} from "../routes/output/post-list-paginated.output";
 import {PostOutput} from "../routes/output/post-output";
 import { injectable } from 'inversify';
+import { PostModel, PostDocument} from "../domain/post.entity";
 
 @injectable()
 export class PostsQueryRepository {
-    async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
+    async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: PostDocument[], totalCount: number}> {
         const filter: any = {'blogId': blogId};
-        let items: WithId<Post>[];
+        let items: PostDocument[];
         if(queryDto) {
             const {
                 pageNumber,
@@ -20,20 +18,19 @@ export class PostsQueryRepository {
                 sortDirection,
             } = queryDto;
             const skip = (pageNumber - 1) * pageSize;
-            items = await postCollection
+            items = await PostModel
                 .find(filter)
                 .sort({[sortBy]: sortDirection})
                 .skip(skip)
-                .limit(pageSize)
-                .toArray();
+                .limit(pageSize);
         }
         else {
-            items = await postCollection.find(filter).toArray();
+            items = await PostModel.find(filter);
         }
-        const totalCount = await postCollection.countDocuments(filter);
+        const totalCount = await PostModel.countDocuments(filter);
         return {items, totalCount};
     }
-    async findManyPosts(queryDto: PostQueryInput): Promise<{items: WithId<Post>[], totalCount: number}> {
+    async findManyPosts(queryDto: PostQueryInput): Promise<{items: PostDocument[], totalCount: number}> {
         const {
             pageNumber,
             pageSize,
@@ -46,24 +43,23 @@ export class PostsQueryRepository {
         if(searchPostTitleTerm){
             filter.title = { $regex: searchPostTitleTerm, $options: "i" };
         }
-        const items: WithId<Post>[] = await postCollection
+        const items: PostDocument[] = await PostModel
             .find(filter)
             .sort({[sortBy]: sortDirection})
             .skip(skip)
-            .limit(pageSize)
-            .toArray();
-        const totalCount = await postCollection.countDocuments(filter);
+            .limit(pageSize);
+        const totalCount = await PostModel.countDocuments(filter);
         return {items, totalCount};
     }
-    async findPostByIdOrFail(id: string): Promise<WithId<Post>> {
-        const result = await postCollection.findOne({_id: new ObjectId(id)});
+    async findPostByIdOrFail(id: string): Promise<PostDocument> {
+        const result = await PostModel.findOne({_id: id});
         if (!result) {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return result;
     }
     mapToPostListPaginatedOutput(
-        posts:WithId<Post>[],
+        posts:PostDocument[],
         pageNumber: number, pageSize: number, totalCount: number,
     ): PostListPaginatedOutput {
         return {
@@ -83,7 +79,7 @@ export class PostsQueryRepository {
             ),
         }
     }
-    mapToPostOutput(post: WithId<Post>): PostOutput {
+    mapToPostOutput(post: PostDocument): PostOutput {
         return {
             id: post._id.toString(),
             title: post.title,

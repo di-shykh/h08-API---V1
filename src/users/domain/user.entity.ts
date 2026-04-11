@@ -1,6 +1,6 @@
 import {UserDB} from '../routes/output/user.db';
 import * as mongoose from 'mongoose';
-import {Model, model, HydratedDocument, ObjectId} from "mongoose";
+import {Model, model, HydratedDocument} from "mongoose";
 
 type UserModelType = Model<UserDB>;
 export type UserDocument = HydratedDocument<UserDB>;
@@ -21,4 +21,4 @@ const userSchema = new mongoose.Schema<UserDB>({
     },
 });
 
-export const UserModel = model<UserDB,UserModelType>('user', userSchema);
+export const UserModel: UserModelType = model<UserDB,UserModelType>('user', userSchema);

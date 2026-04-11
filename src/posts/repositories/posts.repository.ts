@@ -1,44 +1,29 @@
 import {Post} from "../domain/post";
 import {PostInputDto} from "../application/dtos/post.input-dto";
-import {postCollection} from "../../db/mongo.bd";
-import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {PostQueryInput} from "../routes/input/post-query.input";
 import { injectable } from 'inversify';
+import {PostDocument, PostModel} from "../domain/post.entity";
 
 @injectable()
 export class PostsRepository {
-    async createPost(newPost: Post): Promise<string> {
-        const insertPost = await postCollection.insertOne(newPost);
-        return insertPost.insertedId.toString();
+    async save(post: PostDocument): Promise<void>{
+        await post.save();
     }
-   async updatePost(id: string, dto: PostInputDto): Promise<void> {
-        const updatePostResult = await postCollection.updateOne(
-            {_id: new ObjectId(id)},
-            {
-                $set: {
-                    title: dto.title,
-                    shortDescription: dto.shortDescription,
-                    content: dto.content,
-                    blogId: dto.blogId,
-                }
-            });
-        if (updatePostResult.matchedCount < 1) {
-            throw new RepositoryNotFoundError("Post not found.");
-        }
-
-        return;
+    async createPost(newPost: Post): Promise<string> {
+        const insertPost = await PostModel.create(newPost);
+        return insertPost._id.toString();
     }
     async deletePost(id: string): Promise<void> {
-        const deletePostResult = await postCollection.deleteOne({_id: new ObjectId(id)});
+        const deletePostResult = await PostModel.deleteOne({_id: id});
         if (deletePostResult.deletedCount < 1) {
             throw new RepositoryNotFoundError("Post not found.");
         }
         return;
     }
-    async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: WithId<Post>[], totalCount: number}> {
+    async findPostsByBlogId(blogId: string, queryDto?: PostQueryInput ): Promise<{items: PostDocument[], totalCount: number}> {
         const filter: any = {'blogId': blogId};
-        let items: WithId<Post>[];
+        let items: PostDocument[] = [];
         if(queryDto) {
             const {
                 pageNumber,
@@ -47,21 +32,20 @@ export class PostsRepository {
                 sortDirection,
             } = queryDto;
             const skip = (pageNumber - 1) * pageSize;
-            items = await postCollection
+            items = await PostModel
                 .find(filter)
                 .sort({[sortBy]: sortDirection})
                 .skip(skip)
-                .limit(pageSize)
-                .toArray();
+                .limit(pageSize);
         }
         else {
-            items = await postCollection.find(filter).toArray();
+            items = await PostModel.find(filter);
         }
-        const totalCount = await postCollection.countDocuments(filter);
+        const totalCount = await PostModel.countDocuments(filter);
         return {items, totalCount};
     }
-    async findPostByIdOrFail(id: string): Promise<WithId<Post>> {
-        const result = await postCollection.findOne({_id: new ObjectId(id)});
+    async findPostByIdOrFail(id: string): Promise<PostDocument> {
+        const result = await PostModel.findOne({_id: id});
         if (!result) {
             throw new RepositoryNotFoundError("Post not found.");
         }

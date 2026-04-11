@@ -3,6 +3,7 @@ import {PostAttributes} from "./dtos/post-attributs";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {BlogsRepository} from "../../blogs/repositories/blogs.repository";
 import { inject, injectable } from 'inversify';
+import {PostDocument} from "../domain/post.entity";
 
 @injectable()
 export class PostsService {
@@ -33,7 +34,12 @@ export class PostsService {
         return await this.postsRepository.createPost(newPost);
     }
     async updatePost(id: string, dto: PostAttributes): Promise<void> {
-        await this.postsRepository.updatePost(id, dto);
+        const post: PostDocument = await this.postsRepository.findPostByIdOrFail(id);
+        post.title = dto.title;
+        post.shortDescription = dto.shortDescription;
+        post.content = dto.content;
+        post.blogId = dto.blogId;
+        await this.postsRepository.save(post);
     }
     async deletePost(id: string): Promise<void> {
         await this.postsRepository.deletePost(id);

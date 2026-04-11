@@ -1,7 +1,5 @@
 import {HttpStatus} from "../../core/types/http-statuses";
 import {Request, Response} from "express";
-import {WithId} from "mongodb";
-import {User} from "../../users/domain/user";
 import {UserOutput} from "../../users/routes/output/user-output";
 import {errorHandler} from "../../core/errors/error.handler";
 import {Result} from "../../core/result/result.type";

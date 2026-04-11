@@ -4,8 +4,6 @@ import {matchedData} from "express-validator";
 import {setDefaultSortAndPaginationIfNotExist} from "../../core/helpers/set-default-sort-and-pagination";
 import {HttpStatus} from "../../core/types/http-statuses";
 import {errorHandler} from "../../core/errors/error.handler";
-import {WithId} from "mongodb";
-import {Post} from "../domain/post";
 import {CommentInputDto} from "../../comments/application/dtos/comment.input-dto";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {CommentOutput} from "../../comments/routes/output/comment-output";
@@ -18,6 +16,7 @@ import {PostsService} from "../application/post.services";
 import {CommentsService} from "../../comments/application/comment.services";
 import {CommentsQueryRepository} from "../../comments/repositories/comments.query-repository";
 import { inject, injectable } from 'inversify';
+import {PostDocument} from "../domain/post.entity";
 
 @injectable()
 export class PostsController {
@@ -98,7 +97,7 @@ export class PostsController {
     async createComment(req: Request, res: Response) {
         try{
             const postId: string = req.params.id as string;
-            const post: WithId<Post> = await this.postsQueryRepository.findPostByIdOrFail(postId);
+            const post: PostDocument= await this.postsQueryRepository.findPostByIdOrFail(postId);
             const commentInput: CommentInputDto = req.body;
             const userId: string = req.userId as string;
 
