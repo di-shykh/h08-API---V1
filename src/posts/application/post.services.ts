@@ -35,11 +35,13 @@ export class PostsService {
     }
     async updatePost(id: string, dto: PostAttributes): Promise<void> {
         const post: PostDocument = await this.postsRepository.findPostByIdOrFail(id);
-        post.title = dto.title;
-        post.shortDescription = dto.shortDescription;
-        post.content = dto.content;
-        post.blogId = dto.blogId;
-        await this.postsRepository.save(post);
+        if (post) {
+            post.title = dto.title;
+            post.shortDescription = dto.shortDescription;
+            post.content = dto.content;
+            post.blogId = dto.blogId;
+            await this.postsRepository.save(post);
+        }
     }
     async deletePost(id: string): Promise<void> {
         await this.postsRepository.deletePost(id);

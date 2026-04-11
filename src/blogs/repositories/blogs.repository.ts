@@ -1,43 +1,27 @@
 import {Blog} from "../types/blog";
 import {BlogInputDto} from "../application/dtos/blog.input-dto";
-import {blogCollection} from "../../db/mongo.bd";
-import {ObjectId, WithId} from "mongodb";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import { injectable } from 'inversify';
+import {BlogDocument, BlogModel} from "../domain/blog.entity";
 
 @injectable()
 export class BlogsRepository {
-    async createBlog(newBlog: Blog): Promise<string> {
-        const insertResult = await blogCollection.insertOne(newBlog);
-        return insertResult.insertedId.toString();
+    async save(blog: BlogDocument): Promise<void> {
+        await this.save(blog);
     }
-    async updateBlog(id: string, dto: BlogInputDto): Promise<void> {
-        const updateResult = await blogCollection.updateOne(
-            {
-                _id: new ObjectId(id),
-            },
-            {
-                $set: {
-                    name: dto.name,
-                    description: dto.description,
-                    websiteUrl: dto.websiteUrl,
-                },
-            },
-        );
-        if (updateResult.matchedCount < 1) {
-            throw new RepositoryNotFoundError("Blog not found.");
-        }
-        return;
+    async createBlog(newBlog: Blog): Promise<string> {
+        const insertResult = await BlogModel.create(newBlog);
+        return insertResult._id.toString();
     }
     async deleteBlog(id: string): Promise<void> {
-        const deleteResult = await blogCollection.deleteOne({_id: new ObjectId(id)});
+        const deleteResult = await BlogModel.deleteOne({_id: id});
         if (deleteResult.deletedCount < 1) {
             throw new RepositoryNotFoundError("Blog not found.");
         }
        return;
     }
-    async findBlogByIdOrFail(id: string): Promise<WithId<Blog>> {
-        const res = await blogCollection.findOne({_id: new ObjectId(id)});
+    async findBlogByIdOrFail(id: string): Promise<BlogDocument> {
+        const res = await BlogModel.findOne({_id: id});
         if(!res) {
             throw new RepositoryNotFoundError("Blog not found.");
         }

@@ -2,7 +2,6 @@ import {UserDB} from "../routes/output/user.db";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import { injectable } from 'inversify';
-import mongoose from 'mongoose';
 import {UserDocument, UserModel} from "../domain/user.entity";
 
 @injectable()

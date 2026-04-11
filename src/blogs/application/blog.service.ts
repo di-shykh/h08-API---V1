@@ -1,10 +1,9 @@
 import {BlogsRepository} from "../repositories/blogs.repository";
-import {WithId} from "mongodb";
 import {Blog} from "../types/blog";
 import {BlogAttributes} from "./dtos/blog-attributes";
-import {Post} from "../../posts/domain/post";
 import {PostsRepository} from "../../posts/repositories/posts.repository";
 import { inject, injectable } from 'inversify';
+import {PostDocument} from "../../posts/domain/post.entity";
 
 @injectable()
 export class BlogsService {
@@ -30,13 +29,19 @@ export class BlogsService {
         return await this.blogsRepository.createBlog(newBlog);
     }
     async update(id: string, dto: BlogAttributes): Promise<void> {
-        const updateResult = await this.blogsRepository.updateBlog(id, dto);
+        const blog = await this.blogsRepository.findBlogByIdOrFail(id);
+        if (blog) {
+            blog.name = dto.name;
+            blog.description = dto.description;
+            blog.websiteUrl = dto.websiteUrl;
+            await this.blogsRepository.save(blog);
+        }
        return;
     }
     async delete(id: string): Promise<void> {
         const postsWithBlogId = await this.postsRepository.findPostsByBlogId(id);
         if(postsWithBlogId && postsWithBlogId.totalCount > 0){
-            await Promise.all(postsWithBlogId.items.map( (post: WithId<Post>) => {
+            await Promise.all(postsWithBlogId.items.map( (post: PostDocument) => {
                 this.postsRepository.deletePost(post._id.toString())
             }))
         }
