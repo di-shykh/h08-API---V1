@@ -14,4 +14,3 @@ passwordRecoverySchema.index(
     { expireAfterSeconds: 0, name: 'pass_exp_ttl_index' }
 );
 export const PasswordRecoveryModel = model<PasswordRecovery, PasswordRecoveryModelType>('passwordRecovery', passwordRecoverySchema);
-
