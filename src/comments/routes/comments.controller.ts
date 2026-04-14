@@ -29,7 +29,7 @@ export class CommentsController {
             if (!comment) {
                 const result = ResultObject.NotFound('commentId', 'Comment with this Id is not exist');
                 res.status(resultCodeToHttpException(result.status)).json({
-                    errorsMesages: result.extensions
+                    errorsMessages: result.extensions
                 });
                 return;
             }

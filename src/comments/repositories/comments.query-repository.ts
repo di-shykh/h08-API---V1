@@ -1,23 +1,22 @@
-import {ObjectId, WithId} from "mongodb";
-import {CommentDB} from "../routes/output/commnent.db";
-import {commentCollection, userCollection} from "../../db/mongo.bd";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
 import {CommentQueryInput} from "../routes/input/comment-query.input";
 import {CommentListPaginatedOutput} from "../routes/output/comment-list-paginated.output";
 import { injectable } from 'inversify';
+import {CommentDocument, CommentModel} from "../domain/comment.entity";
+import {UserDocument, UserModel} from "../../users/domain/user.entity";
 
 @injectable()
 export class CommentsQueryRepository {
-    async findCommentById(id: string): Promise<WithId<CommentDB>> {
-        const result = await commentCollection.findOne({_id: new ObjectId(id)});
+    async findCommentById(id: string): Promise<CommentDocument> {
+        const result = await CommentModel.findOne({_id: id});
         if (!result) {
             throw new RepositoryNotFoundError("Comment not found.");
         }
         return result;
     }
-    async findManyComments(queryDto: CommentQueryInput, postId: string): Promise<{items: WithId<CommentDB>[], totalCount: number}> {
+    async findManyComments(queryDto: CommentQueryInput, postId: string): Promise<{items: CommentDocument[], totalCount: number}> {
         const {
             pageNumber,
             pageSize,
@@ -46,18 +45,16 @@ export class CommentsQueryRepository {
         if(userLogin) {
             filter.userLogin = userLogin;
         }
-        const items: WithId<CommentDB>[] = await commentCollection
+        const items: CommentDocument[] = await CommentModel
             .find(filter)
             .sort({[sortBy]: sortDirection})
             .skip(skip)
-            .limit(pageSize)
-            .toArray()
-        ;
-        const totalCount = await commentCollection.countDocuments(filter);
+            .limit(pageSize);
+        const totalCount = await CommentModel.countDocuments(filter);
         return {items, totalCount};
     }
-    async mapToCommentOutput(comment: WithId<CommentDB>): Promise<CommentOutput> {
-        const user: WithId<UserDB> | null = await userCollection.findOne({_id: new ObjectId(comment.userId)});
+    async mapToCommentOutput(comment: CommentDocument): Promise<CommentOutput> {
+        const user: UserDocument | null = await UserModel.findOne({_id: comment.userId});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
@@ -73,7 +70,7 @@ export class CommentsQueryRepository {
         return commentOutput;
     }
     async mapToCommentListOutput(
-        comments: WithId<CommentDB>[],
+        comments: CommentDocument[],
         pageNumber: number,
         pageSize: number,
         totalCount: number
@@ -89,14 +86,14 @@ export class CommentsQueryRepository {
         }
 
         const userIds = comments.map(comment => comment.userId);
-        const users = await userCollection.find({
-            _id: { $in: userIds.map(id => new ObjectId(id)) }
-        }).toArray();
+        const users = await UserModel.find({
+            _id: { $in: userIds.map(id => id) }
+        }).lean();
         const userMap = new Map<string, UserDB>();
         users.forEach(user => {
             userMap.set(user._id.toString(), user);
         });
-        const items: CommentOutput[] = comments.map((comment: WithId<CommentDB>): CommentOutput => {
+        const items: CommentOutput[] = comments.map((comment: CommentDocument): CommentOutput => {
             const user: UserDB | undefined = userMap.get(comment.userId);
             if (!user) {
                 throw new RepositoryNotFoundError(`User with id ${comment.userId} not found.`);

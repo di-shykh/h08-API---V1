@@ -9,6 +9,8 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {CommentsRepository} from "../repositories/comments.repository";
 import {PostsRepository} from "../../posts/repositories/posts.repository";
 import { inject, injectable } from 'inversify';
+import {PostDocument} from "../../posts/domain/post.entity";
+import {CommentDocument} from "../domain/comment.entity";
 
 @injectable()
 export class CommentsService {
@@ -24,7 +26,7 @@ export class CommentsService {
     }
 
     async createComment(postId: string, userId: string, dto: CommentInputDto): Promise<Result<CommentOutput|null>> {
-        let post: WithId<Post> | null;
+        let post: PostDocument | null;
         try{
             post = await this.postsRepository.findPostByIdOrFail(postId);
         } catch (error) {
@@ -45,7 +47,7 @@ export class CommentsService {
             createdAt: new Date().toISOString(),
         }
         const createdCommentId: string = await this.commentsRepository.createComment(newComment);
-        const createdComment: WithId<CommentDB> = await this.commentsRepository.findCommentById(createdCommentId);
+        const createdComment: CommentDocument = await this.commentsRepository.findCommentById(createdCommentId);
         const createdCommentOutput: CommentOutput = await this.commentsRepository.mapToCommentOutput(createdComment);
         return ResultObject.Created(createdCommentOutput);
     }
@@ -54,9 +56,15 @@ export class CommentsService {
         if(checkResult.status === ResultStatus.Forbidden||checkResult.status === ResultStatus.NotFound) {
             return checkResult;
         }
-        const result: UpdateResult = await this.commentsRepository.updateComment(commentId, dto);
-        if(result.matchedCount <1) {
+        const comment: CommentDocument = await this.commentsRepository.findCommentById(commentId);
+        if (!comment) {
             return ResultObject.NotFound('commentId', 'Comment with this Id is not exist');
+        }
+        comment.content= dto.content;
+        try{
+            await this.commentsRepository.save(comment);
+        } catch (error) {
+            return ResultObject.InternalServerError('Comment wasn\'t update');
         }
         return ResultObject.NoContent();
     }

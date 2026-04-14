@@ -6,37 +6,31 @@ import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.er
 import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
 import { injectable } from 'inversify';
+import {CommentModel, CommentDocument} from "../domain/comment.entity";
+import {UserDocument, UserModel} from "../../users/domain/user.entity";
 
 @injectable()
 export class CommentsRepository {
+    async save(comment: CommentDocument): Promise<void> {
+        await comment.save();
+    }
     async createComment(comment: CommentDB): Promise<string> {
-        const insertedComment = await commentCollection.insertOne(comment);
-        return insertedComment.insertedId.toString();
+        const insertedComment = await CommentModel.create(comment);
+        return insertedComment._id.toString();
     }
     async deleteComment(id: string): Promise<DeleteResult> {
-        const deletedComments: DeleteResult = await commentCollection.deleteOne({_id: new ObjectId(id)})
+        const deletedComments: DeleteResult = await CommentModel.deleteOne({_id: id})
         return deletedComments;
     }
-    async updateComment(commentId: string, dto: CommentInputDto): Promise<UpdateResult> {
-        const updatedComment = await commentCollection.updateOne(
-            {_id: new ObjectId(commentId)},
-            {
-                $set: {
-                    content: dto.content,
-                }
-            }
-        );
-        return updatedComment;
-    }
-    async findCommentById(id: string): Promise<WithId<CommentDB>> {
-        const result = await commentCollection.findOne({_id: new ObjectId(id)});
+    async findCommentById(id: string): Promise<CommentDocument> {
+        const result = await CommentModel.findOne({_id: id});
         if (!result) {
             throw new RepositoryNotFoundError("Comment not found.");
         }
         return result;
     }
-    async mapToCommentOutput(comment: WithId<CommentDB>): Promise<CommentOutput> {
-        const user: WithId<UserDB> | null = await userCollection.findOne({_id: new ObjectId(comment.userId)});
+    async mapToCommentOutput(comment: CommentDocument): Promise<CommentOutput> {
+        const user: UserDocument | null = await UserModel.findOne({_id: comment.userId});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
