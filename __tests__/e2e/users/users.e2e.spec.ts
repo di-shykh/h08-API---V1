@@ -23,7 +23,7 @@ describe( "Users API", ()=>{
         await clearDb(app);
     });
     afterAll(async () => {
-        stopDb();
+       await stopDb();
     });
     it( "should create a user; POST /hometask_05/api/users" , async () => {
         await createUser(app, {

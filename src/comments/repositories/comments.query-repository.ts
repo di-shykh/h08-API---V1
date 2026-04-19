@@ -3,9 +3,11 @@ import {CommentOutput} from "../routes/output/comment-output";
 import {UserDB} from "../../users/routes/output/user.db";
 import {CommentQueryInput} from "../routes/input/comment-query.input";
 import {CommentListPaginatedOutput} from "../routes/output/comment-list-paginated.output";
-import { injectable } from 'inversify';
+import {injectable} from 'inversify';
 import {CommentDocument, CommentModel} from "../domain/comment.entity";
 import {UserDocument, UserModel} from "../../users/domain/user.entity";
+import {LikeDocument, LikeModel} from "../../likes/domain/like.entity";
+import {LikeStatus} from "../../likes/types/likeStatus";
 
 @injectable()
 export class CommentsQueryRepository {
@@ -58,6 +60,10 @@ export class CommentsQueryRepository {
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
+        const like = await LikeModel.findOne({
+            authorId: comment.userId,
+            parentId: comment._id.toString(),
+        });
         const commentOutput: CommentOutput = {
             id: comment._id.toString(),
             content: comment.content,
@@ -66,6 +72,11 @@ export class CommentsQueryRepository {
                 userLogin: user.login
             },
             createdAt: comment.createdAt,
+            likesInfo: {
+                likesCount: comment.likesCount,
+                dislikesCount: comment.dislikesCount,
+                myStatus: like?.status ?? LikeStatus.none,
+            }
         }
         return commentOutput;
     }
@@ -93,21 +104,32 @@ export class CommentsQueryRepository {
         users.forEach(user => {
             userMap.set(user._id.toString(), user);
         });
-        const items: CommentOutput[] = comments.map((comment: CommentDocument): CommentOutput => {
-            const user: UserDB | undefined = userMap.get(comment.userId);
-            if (!user) {
-                throw new RepositoryNotFoundError(`User with id ${comment.userId} not found.`);
-            }
-            return {
-                id: comment._id.toString(),
-                content: comment.content,
-                commentatorInfo: {
-                    userId: comment.userId,
-                    userLogin: user.login
-                },
-                createdAt: comment.createdAt,
-            };
-        })
+        const items: CommentOutput[] = await Promise.all(
+            comments.map(async (comment: CommentDocument): Promise<CommentOutput> => {
+                const user: UserDB | undefined = userMap.get(comment.userId);
+                if (!user) {
+                    throw new RepositoryNotFoundError(`User with id ${comment.userId} not found.`);
+                }
+                const like = await LikeModel.findOne({
+                    authorId: comment.userId,
+                    parentId: comment._id.toString(),
+                });
+                return {
+                    id: comment._id.toString(),
+                    content: comment.content,
+                    commentatorInfo: {
+                        userId: comment.userId,
+                        userLogin: user.login
+                    },
+                    createdAt: comment.createdAt,
+                    likesInfo: {
+                        likesCount: comment.likesCount,
+                        dislikesCount: comment.dislikesCount,
+                        myStatus: like?.status ?? LikeStatus.none,
+                    }
+                };
+            })
+        )
         return {
             pagesCount: Math.ceil(totalCount/pageSize),
             page: pageNumber,

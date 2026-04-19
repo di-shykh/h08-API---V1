@@ -12,6 +12,8 @@ import {HttpStatus} from "../../../src/core/types/http-statuses";
 import {getCookiesString, hasCookieWithName, validateRefreshTokenCookie} from "../../utils/cookies.helpers";
 import jwt from 'jsonwebtoken';
 
+
+
 const TEST_USER = {
     LOGIN: 'TestUser',
     PASSWORD: 'password123',
@@ -110,7 +112,7 @@ describe("Check Auth: POST /auth/login", () => {
         await clearDb(app); // Очищаем перед КАЖДЫМ тестом
     });
     afterAll(async () => {
-        stopDb();
+       await stopDb();
     });
     describe("POST /auth/login", () => {
         describe("Successful login scenarios", () => {

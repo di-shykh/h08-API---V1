@@ -37,7 +37,7 @@ describe("Sessions tests", () => {
         refreshTokens = [];
     });
     afterAll(async () => {
-        stopDb();
+       await stopDb();
     });
     async function setupUserWithSessions() {
         // Сначала создаем пользователя

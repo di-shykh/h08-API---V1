@@ -29,7 +29,7 @@ describe("Blogs API", () => {
         await clearDb(app);
     });
     afterAll(async () => {
-        stopDb();
+       await stopDb();
     })
     it('should create blog; POST /hometask_04/api/blogs', async () => {
 

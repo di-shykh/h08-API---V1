@@ -11,6 +11,7 @@ import {PostsRepository} from "../../posts/repositories/posts.repository";
 import { inject, injectable } from 'inversify';
 import {PostDocument} from "../../posts/domain/post.entity";
 import {CommentDocument} from "../domain/comment.entity";
+import {LikeStatus} from "../../likes/types/likeStatus";
 
 @injectable()
 export class CommentsService {
@@ -45,6 +46,8 @@ export class CommentsService {
             userId,
             postId,
             createdAt: new Date().toISOString(),
+            likesCount: 0,
+            dislikesCount: 0,
         }
         const createdCommentId: string = await this.commentsRepository.createComment(newComment);
         const createdComment: CommentDocument = await this.commentsRepository.findCommentById(createdCommentId);
@@ -88,5 +91,18 @@ export class CommentsService {
             return ResultObject.Forbidden();
         }
         return ResultObject.Success(null);
+    }
+    async changeLikeStatus (commentId: string, userId: string, likeStatus: LikeStatus): Promise<Result> {
+        const comment = await this.commentsRepository.findCommentById(commentId);
+        if (!comment) {
+            return ResultObject.NotFound('commentId', 'Comment with this Id is not exist');
+        }
+        if(!Object.values(LikeStatus).includes(likeStatus)) {
+            return ResultObject.BadRequest('likeStatus', 'LikeStatus isn\'t valid!');
+        }
+        if(likeStatus==='Like'){
+
+        }
+        return ResultObject.NoContent();
     }
 }

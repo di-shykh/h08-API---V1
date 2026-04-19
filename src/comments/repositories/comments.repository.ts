@@ -1,13 +1,12 @@
 import {CommentDB} from "../routes/output/commnent.db";
-import {commentCollection, userCollection} from "../../db/mongo.bd";
-import {DeleteResult, ObjectId, UpdateResult, WithId} from "mongodb";
-import {CommentInputDto} from "../application/dtos/comment.input-dto";
+import { DeleteResult } from "mongoose";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {CommentOutput} from "../routes/output/comment-output";
-import {UserDB} from "../../users/routes/output/user.db";
 import { injectable } from 'inversify';
 import {CommentModel, CommentDocument} from "../domain/comment.entity";
 import {UserDocument, UserModel} from "../../users/domain/user.entity";
+import {LikeStatus} from "../../likes/types/likeStatus";
+import {LikeModel} from "../../likes/domain/like.entity";
 
 @injectable()
 export class CommentsRepository {
@@ -34,6 +33,10 @@ export class CommentsRepository {
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
+        const like = await LikeModel.findOne({
+            authorId: comment.userId,
+            parentId: comment._id.toString(),
+        });
         const commentOutput: CommentOutput = {
             id: comment._id.toString(),
             content: comment.content,
@@ -42,6 +45,11 @@ export class CommentsRepository {
                 userLogin: user.login
             },
             createdAt: comment.createdAt,
+            likesInfo: {
+                likesCount: comment.likesCount,
+                dislikesCount: comment.dislikesCount,
+                myStatus: like?.status ?? LikeStatus.none,
+            }
         }
         return commentOutput;
     }

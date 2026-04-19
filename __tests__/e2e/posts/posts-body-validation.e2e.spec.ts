@@ -20,7 +20,7 @@ describe ('Post API body validation check',() => {
         await clearDb(app);
     })
     afterAll(async () => {
-        stopDb();
+       await stopDb();
     })
     it('should not create post when incorrect body passed; POST /api/posts', async () => {
 

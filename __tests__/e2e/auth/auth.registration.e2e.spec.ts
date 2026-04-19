@@ -1,106 +1,107 @@
+import { container } from "../../../src/inversify-ioc";
+import nodemailer from 'nodemailer';
+
 jest.mock('../../../src/auth/middlewares/rate-limiting.middleware', () => ({
     rateLimitGuard: jest.fn((req, res, next) => next())
 }));
 
-// Частичное мокирование - только emailAdapter
-jest.mock('../../../src/composition.root', () => {
-    const originalModule = jest.requireActual('../../../src/composition.root');
-    const mockSendEmail = jest.fn().mockResolvedValue(undefined);
-    const mockResendEmail = jest.fn().mockResolvedValue(undefined);
-
-    return {
-        ...originalModule, // Сохраняем все оригинальные экспорты
-        emailAdapter: {
-            sendConfirmationEmail: mockSendEmail,
-            resendEmail: mockResendEmail
-        }
-    };
-});
-
-import express, {Express} from "express";
-import {setupApp} from "../../../src/setup-app";
-import {generateBasicAuthToken} from "../../utils/generate-admin-auth-token";
-import {runDB, stopDb, userCollection} from "../../../src/db/mongo.bd";
-import {SETTINGS} from "../../../src/core/settings/settings";
-import {clearDb} from "../../utils/clear-db";
+import express, { Express } from "express";
+import { setupApp } from "../../../src/setup-app";
+import { runDB, stopDb } from "../../../src/db/mongo.bd";
+import { UserModel } from "../../../src/users/domain/user.entity";
+import { SETTINGS } from "../../../src/core/settings/settings";
+import { clearDb } from "../../utils/clear-db";
 import request from "supertest";
-import {AUTH_PATH} from "../../../src/core/paths/paths";
-import {HttpStatus} from "../../../src/core/types/http-statuses";
-import {beforeEach} from "node:test";
-import {v4 as uuidv4} from "uuid";
-
-const { emailAdapter } = require('../../../src/composition.root');
+import { AUTH_PATH } from "../../../src/core/paths/paths";
+import { HttpStatus } from "../../../src/core/types/http-statuses";
+import { v4 as uuidv4 } from "uuid";
+import { EmailAdapter } from "../../../src/auth/adapters/email.adapter";
 
 process.env.NODE_ENV = 'test';
+
 describe("Check Auth: POST /auth/registration and POST /auth/registration-confirmation", () => {
     const app: Express = express();
     setupApp(app);
-    const adminToken: string = generateBasicAuthToken();
     let testNumber = 0;
+    let mockEmailAdapter: EmailAdapter;
+
     beforeAll(async () => {
-        jest.restoreAllMocks();
-        jest.clearAllMocks();
+        mockEmailAdapter = {
+            transporter: {} as nodemailer.Transporter,
+            sendConfirmationEmail: jest.fn().mockResolvedValue(undefined),
+            resendEmail: jest.fn().mockResolvedValue(undefined),
+            sendRecoveryCodeOnEmail: jest.fn().mockResolvedValue(undefined),
+        } as EmailAdapter;
+
+        container.unbind(EmailAdapter);
+        container.bind(EmailAdapter).toConstantValue(mockEmailAdapter);
         await runDB(SETTINGS.MONGO_URL_TEST);
         await clearDb(app);
+
     });
+
     beforeEach(async () => {
         await clearDb(app);
 
-        // Очищаем моки
+        // Очищаем все моки
         jest.clearAllMocks();
-        (emailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
-        (emailAdapter.resendEmail as jest.Mock).mockClear();
+        (mockEmailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
+        (mockEmailAdapter.resendEmail as jest.Mock).mockClear();
+        (mockEmailAdapter.sendRecoveryCodeOnEmail as jest.Mock).mockClear();
 
-        // Сбрасываем реализации моков к стандартным
-        (emailAdapter.sendConfirmationEmail as jest.Mock).mockResolvedValue(undefined);
-        (emailAdapter.resendEmail as jest.Mock).mockResolvedValue(undefined);
+        // Сбрасываем реализации к стандартным
+        (mockEmailAdapter.sendConfirmationEmail as jest.Mock).mockResolvedValue(undefined);
+        (mockEmailAdapter.resendEmail as jest.Mock).mockResolvedValue(undefined);
+        (mockEmailAdapter.sendRecoveryCodeOnEmail as jest.Mock).mockResolvedValue(undefined);
 
         testNumber++;
-    })
+    });
+
     afterAll(async () => {
         await clearDb(app);
-        stopDb();
+        await stopDb();
     });
-    it('should register user and send registration code to email: POST /hometask_07/api/auth/registration', async () => {
-        // Получаем мок-функции
-        const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
 
+    it('should register user and send registration code to email', async () => {
         const registrationData = {
             login: `user${testNumber}`,
             password: 'testPassword',
             email: `test${testNumber}@mail.ru`,
-        }
-        const response = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData)
             .expect(HttpStatus.NoContent);
 
-        // Проверяем вызов email adapter
-        expect(mockSendEmail).toHaveBeenCalledTimes(1);
-        expect(mockSendEmail).toHaveBeenCalledWith(
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledWith(
             `test${testNumber}@mail.ru`,
             expect.any(String)
         );
-    })
-    it('should not register user and send registration code to email: POST /hometask_07/api/auth/registration', async () => {
+    });
 
+    it('should not register user with invalid data', async () => {
         const registrationData = {
             login: 't',
             password: 'testPassword',
             email: `test${testNumber}@mail.ru`,
-        }
-        const response = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData)
             .expect(HttpStatus.BadRequest);
+
         testNumber++;
 
         const registrationData2 = {
             login: `user${testNumber}`,
             password: 'testPassword',
             email: `test${testNumber}@mail.ru`,
-        }
-        const response2 = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData2)
             .expect(HttpStatus.NoContent);
@@ -109,129 +110,51 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             login: `user${testNumber}`,
             password: 'testPassword',
             email: `test${testNumber}@mail.ru`,
-        }
-        const response3 = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData3)
             .expect(HttpStatus.BadRequest);
+
         testNumber++;
 
         const registrationData4 = {
             login: `user${testNumber}`,
             password: 'testPassword3',
             email: '@mail.ru',
-        }
-        const response4 = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData4)
             .expect(HttpStatus.BadRequest);
 
         const registrationData5 = {
-            login: `user${testNumber-1}`,
+            login: `user${testNumber - 1}`,
             password: 'testPassword3',
             email: 'test@mail.ru',
-        }
-        const response5 = await request(app)
+        };
+
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData5)
             .expect(HttpStatus.BadRequest);
-    })
-    it('should confirm registration: POST /hometask_07/api/auth/registration-confirmation', async () => {
+    });
+
+    it('should confirm registration', async () => {
         let sentCode: string = '';
 
-        (emailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
-        (emailAdapter.sendConfirmationEmail as jest.Mock).mockImplementation(
+        (mockEmailAdapter.sendConfirmationEmail as jest.Mock).mockImplementation(
             async (email: string, code: string) => {
                 sentCode = code;
                 return undefined;
             }
         );
-        //const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
-        (emailAdapter.resendEmail as jest.Mock).mockResolvedValue(undefined);
 
         const email: string = `test${testNumber}@mail.ru`;
         const registrationData = {
             login: `user${testNumber}`,
-            password: 'testPassword',
-            email,
-        }
-        // Регистрация
-        const response = await request(app)
-            .post(`${AUTH_PATH}/registration`)
-            .send(registrationData)
-            .expect(HttpStatus.NoContent);
-
-        // Проверяем вызов email adapter
-        expect(emailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
-        expect(emailAdapter.sendConfirmationEmail).toHaveBeenCalledWith(
-            `test${testNumber}@mail.ru`,
-            expect.any(String)
-        );
-        // Проверяем что код был сохранен в переменной sentCode
-        expect(sentCode).toBeTruthy();
-        expect(typeof sentCode).toBe('string');
-
-        const confirmationRecord = await userCollection.findOne({ email });
-        expect(confirmationRecord).toBeDefined();
-        expect(confirmationRecord?.emailConfirmation).toBeDefined();
-        expect(confirmationRecord?.emailConfirmation?.confirmationCode).toBeDefined();
-
-        // Сравниваем код отправленный с кодом в БД
-        expect(sentCode).toBe(confirmationRecord!.emailConfirmation!.confirmationCode);
-
-        if (!confirmationRecord || !confirmationRecord.emailConfirmation) {
-            throw new Error('Registration record not found or incomplete');
-        }
-
-        const confirmationCode = confirmationRecord!.emailConfirmation.confirmationCode;
-
-        await request(app)
-            .post(`${AUTH_PATH}/registration-confirmation`)
-            .send({ code: confirmationCode })
-            .expect(HttpStatus.NoContent);
-    })
-    it('should not confirm registration with wrong code: POST /hometask_07/api/auth/registration-confirmation', async () => {
-        const email: string = 'di49@mail.ru';
-        const registrationData = {
-            login: 'testUser',
-            password: 'testPassword',
-            email,
-        }
-        const response = await request(app)
-            .post(`${AUTH_PATH}/registration`)
-            .send(registrationData)
-            .expect(HttpStatus.NoContent);
-        const confirmationRecord = await userCollection.findOne({ email });
-        expect(confirmationRecord).toBeDefined();
-        expect(confirmationRecord?.emailConfirmation).toBeDefined();
-        expect(confirmationRecord?.emailConfirmation?.confirmationCode).toBeDefined();
-
-        if (!confirmationRecord || !confirmationRecord.emailConfirmation) {
-            throw new Error('Registration record not found or incomplete');
-        }
-
-        const confirmationCode = confirmationRecord!.emailConfirmation.confirmationCode;
-
-        await request(app)
-            .post(`${AUTH_PATH}/registration-confirmation`)
-            .send({ code: confirmationCode })
-            .expect(HttpStatus.NoContent);
-
-        await request(app)
-            .post(`${AUTH_PATH}/registration-confirmation`)
-            .send({ code: confirmationCode })
-            .expect(HttpStatus.BadRequest);
-
-        const code: string = uuidv4();
-        await request(app)
-            .post(`${AUTH_PATH}/registration-confirmation`)
-            .send({ code: code })
-            .expect(HttpStatus.BadRequest);
-    })
-    it('should reject expired confirmation code', async () => {
-        const email: string = 'di49@mail.ru';
-        const registrationData = {
-            login: 'testUser',
             password: 'testPassword',
             email,
         };
@@ -241,12 +164,78 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             .send(registrationData)
             .expect(HttpStatus.NoContent);
 
-        const user = await userCollection.findOne({ email });
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
+        expect(sentCode).toBeTruthy();
+        expect(typeof sentCode).toBe('string');
+
+        const confirmationRecord = await UserModel.findOne({ email });
+        expect(confirmationRecord).toBeDefined();
+        expect(confirmationRecord?.emailConfirmation?.confirmationCode).toBeDefined();
+        expect(sentCode).toBe(confirmationRecord!.emailConfirmation!.confirmationCode);
+
+        await request(app)
+            .post(`${AUTH_PATH}/registration-confirmation`)
+            .send({ code: confirmationRecord!.emailConfirmation!.confirmationCode })
+            .expect(HttpStatus.NoContent);
+    });
+
+    it('should not confirm registration with wrong code', async () => {
+        const email: string = `test${testNumber}@mail.ru`;
+        const registrationData = {
+            login: `user${testNumber}`,
+            password: 'testPassword',
+            email,
+        };
+
+        await request(app)
+            .post(`${AUTH_PATH}/registration`)
+            .send(registrationData)
+            .expect(HttpStatus.NoContent);
+
+        const confirmationRecord = await UserModel.findOne({ email });
+        expect(confirmationRecord).toBeDefined();
+
+        const confirmationCode = confirmationRecord!.emailConfirmation!.confirmationCode;
+
+        // Подтверждаем один раз
+        await request(app)
+            .post(`${AUTH_PATH}/registration-confirmation`)
+            .send({ code: confirmationCode })
+            .expect(HttpStatus.NoContent);
+
+        // Пытаемся подтвердить второй раз с тем же кодом
+        await request(app)
+            .post(`${AUTH_PATH}/registration-confirmation`)
+            .send({ code: confirmationCode })
+            .expect(HttpStatus.BadRequest);
+
+        // Пытаемся с неправильным кодом
+        const wrongCode: string = uuidv4();
+        await request(app)
+            .post(`${AUTH_PATH}/registration-confirmation`)
+            .send({ code: wrongCode })
+            .expect(HttpStatus.BadRequest);
+    });
+
+    it('should reject expired confirmation code', async () => {
+        const email: string = `test${testNumber}@mail.ru`;
+        const registrationData = {
+            login: `user${testNumber}`,
+            password: 'testPassword',
+            email,
+        };
+
+        await request(app)
+            .post(`${AUTH_PATH}/registration`)
+            .send(registrationData)
+            .expect(HttpStatus.NoContent);
+
+        const user = await UserModel.findOne({ email });
         expect(user).toBeDefined();
         expect(user!.emailConfirmation).toBeDefined();
 
         const expiredDate = new Date(Date.now() - 1000 * 60 * 60 * 25); // 25 часов назад
-        await userCollection.updateOne(
+        await UserModel.updateOne(
             { email },
             {
                 $set: {
@@ -255,81 +244,70 @@ describe("Check Auth: POST /auth/registration and POST /auth/registration-confir
             }
         );
 
-        const updatedUser = await userCollection.findOne({ email });
-        if (!updatedUser|| !updatedUser.emailConfirmation) {
-            throw new Error('Registration record not found or incomplete');
-        }
-        console.log('Expired date:', updatedUser!.emailConfirmation.expirationDate);
-
-        // Пытаемся подтвердить с истекшим кодом
-        if (!user|| !user.emailConfirmation) {
-            throw new Error('Registration record not found or incomplete');
-        }
         await request(app)
             .post(`${AUTH_PATH}/registration-confirmation`)
-            .send({ code: user!.emailConfirmation.confirmationCode })
-            .expect(HttpStatus.BadRequest); // Ожидаем ошибку
+            .send({ code: user!.emailConfirmation!.confirmationCode })
+            .expect(HttpStatus.BadRequest);
     });
-    it ('should resend confirmation code on email: POST /hometask_07/api/auth/registration-email-resending', async () => {
-        const mockSendEmail = emailAdapter.sendConfirmationEmail as jest.Mock;
-        mockSendEmail.mockClear();
 
+    it('should resend confirmation code on email', async () => {
         const email: string = `test${testNumber}@mail.ru`;
         const registrationData = {
             login: `user${testNumber}`,
             password: 'testPassword',
             email,
-        }
-        const response = await request(app)
+        };
+
+        // Регистрация
+        await request(app)
             .post(`${AUTH_PATH}/registration`)
             .send(registrationData)
             .expect(HttpStatus.NoContent);
 
-        expect(mockSendEmail).toHaveBeenCalledTimes(1);
-        expect(mockSendEmail).toHaveBeenCalledWith(
-            `test${testNumber}@mail.ru`,
-            expect.any(String)
-        );
+        // Проверяем первый вызов
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
 
-        const initialRecord = await userCollection.findOne({ email });
+        const initialRecord = await UserModel.findOne({ email });
         if (!initialRecord || !initialRecord.emailConfirmation) {
             throw new Error('Registration record not found or incomplete');
         }
 
-        const code = initialRecord!.emailConfirmation.confirmationCode;
+        // Очищаем мок для следующего вызова
+        (mockEmailAdapter.sendConfirmationEmail as jest.Mock).mockClear();
 
-        const response2 = await request(app)
+        // Повторная отправка
+        await request(app)
             .post(`${AUTH_PATH}/registration-email-resending`)
-            .send({email: email})
+            .send({ email: email })
             .expect(HttpStatus.NoContent);
 
-        expect(mockSendEmail).toHaveBeenCalledTimes(1);
-        expect(mockSendEmail).toHaveBeenCalledWith(
-            `test${testNumber}@mail.ru`,
+        // Проверяем, что метод был вызван снова
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledTimes(1);
+        expect(mockEmailAdapter.sendConfirmationEmail).toHaveBeenCalledWith(
+            email,
             expect.any(String)
         );
 
-
-        const updatedRecord = await userCollection.findOne({ email });
+        const updatedRecord = await UserModel.findOne({ email });
         if (!updatedRecord || !updatedRecord.emailConfirmation) {
             throw new Error('Registration record not found or incomplete');
         }
 
-        expect(updatedRecord.emailConfirmation.confirmationCode).not.toBe(initialRecord.emailConfirmation.confirmationCode)
-        expect(updatedRecord.emailConfirmation.expirationDate).not.toBe(initialRecord.emailConfirmation.expirationDate)
-        // Дата истечения должна быть в будущем
-        expect(new Date(updatedRecord.emailConfirmation.expirationDate).getTime())
-            .toBeGreaterThan(Date.now());
+        expect(updatedRecord.emailConfirmation.confirmationCode).not.toBe(initialRecord.emailConfirmation.confirmationCode);
+        expect(updatedRecord.emailConfirmation.expirationDate).not.toBe(initialRecord.emailConfirmation.expirationDate);
+        expect(new Date(updatedRecord.emailConfirmation.expirationDate).getTime()).toBeGreaterThan(Date.now());
         expect(updatedRecord.emailConfirmation.isConfirmed).toBe(false);
-        //Проверяем что старый код не работает
+
+        // Проверяем что старый код не работает
         await request(app)
             .post(`${AUTH_PATH}/registration-confirmation`)
             .send({ code: initialRecord.emailConfirmation.confirmationCode })
             .expect(HttpStatus.BadRequest);
-        //Проверяем что новый код работает
+
+        // Проверяем что новый код работает
         await request(app)
             .post(`${AUTH_PATH}/registration-confirmation`)
             .send({ code: updatedRecord.emailConfirmation.confirmationCode })
             .expect(HttpStatus.NoContent);
-    })
+    });
 });

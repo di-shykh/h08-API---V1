@@ -7,7 +7,7 @@ import {BlogDocument, BlogModel} from "../domain/blog.entity";
 @injectable()
 export class BlogsRepository {
     async save(blog: BlogDocument): Promise<void> {
-        await this.save(blog);
+        await blog.save();
     }
     async createBlog(newBlog: Blog): Promise<string> {
         const insertResult = await BlogModel.create(newBlog);

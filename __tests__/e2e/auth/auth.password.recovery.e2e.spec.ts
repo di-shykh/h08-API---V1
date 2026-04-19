@@ -39,7 +39,7 @@ describe("Check password recovery flow", () =>{
     })
     afterAll(async () => {
         emailAdapterSpy.mockRestore();
-        stopDb();
+        await stopDb();
     });
 
     describe("/password-recovery", () =>{

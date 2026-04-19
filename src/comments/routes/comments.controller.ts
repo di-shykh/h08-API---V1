@@ -8,6 +8,7 @@ import {CommentInputDto} from "../application/dtos/comment.input-dto";
 import {CommentsQueryRepository} from "../repositories/comments.query-repository";
 import {CommentsService} from "../application/comment.services";
 import { inject, injectable } from 'inversify';
+import {LikeStatus} from "../../likes/types/likeStatus";
 
 @injectable()
 export class CommentsController {
@@ -72,6 +73,32 @@ export class CommentsController {
             const content: CommentInputDto = req.body;
 
             const result = await this.commentsService.updateComment(commentId, userId, content)
+            if (result.status === ResultStatus.Forbidden) {
+                res.status(resultCodeToHttpException(ResultStatus.Forbidden)).json({
+                    errorsMessages: result.errorMessage,
+                });
+                return;
+            }
+            if (result.status === ResultStatus.NotFound) {
+                res.status(resultCodeToHttpException(ResultStatus.NotFound)).json({
+                    errorsMessages: result.errorMessage,
+                })
+                return;
+            }
+            if(result.status === ResultStatus.NoContent) {
+                res.sendStatus(HttpStatus.NoContent);
+            }
+        } catch (e) {
+            errorHandler(e,res);
+        }
+    }
+    async changeLikeStatus(req: Request, res: Response) {
+        try {
+            const commentId: string = req.params.id as string;
+            const userId: string = req.userId as string;
+            const likeStatus: LikeStatus = req.body;
+
+            const result = await this.commentsService.changeLikeStatus(commentId, userId, likeStatus)
             if (result.status === ResultStatus.Forbidden) {
                 res.status(resultCodeToHttpException(ResultStatus.Forbidden)).json({
                     errorsMessages: result.errorMessage,

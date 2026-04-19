@@ -1,13 +1,12 @@
 import {Router, Request, Response} from 'express';
 import {HttpStatus} from "../../core/types/http-statuses";
-import {
-    blogCollection,
-    commentCollection,
-    postCollection,
-    rateLimitCollection,
-    sessionCollection,
-    userCollection
-} from "../../db/mongo.bd";
+import {BlogModel} from '../../blogs/domain/blog.entity'
+import {PostModel} from "../../posts/domain/post.entity";
+import {CommentModel} from "../../comments/domain/comment.entity";
+import {UserModel} from "../../users/domain/user.entity";
+import {SessionModel} from "../../securityDevices/domain/session.entity";
+import {RateLimitModel} from "../../auth/domain/rate-limit.entity";
+import {PasswordRecoveryModel} from "../../auth/domain/password-recovery.entity";
 
 export const testingRouter: Router = Router({});
 
@@ -16,18 +15,17 @@ testingRouter.delete('/all-data',async (req: Request, res: Response): Promise<vo
     // для диагностики
     try{
         await Promise.all([
-            blogCollection.deleteMany(),
-            postCollection.deleteMany(),
-            userCollection.deleteMany(),
-            commentCollection.deleteMany(),
-            sessionCollection.deleteMany(),
-            rateLimitCollection.deleteMany(),
-            postCollection.deleteMany(),
+            BlogModel.deleteMany(),
+            PostModel.deleteMany(),
+            UserModel.deleteMany(),
+            CommentModel.deleteMany(),
+            SessionModel.deleteMany(),
+            RateLimitModel.deleteMany(),
+            PasswordRecoveryModel.deleteMany(),
         ])
     }
     catch(err){
         console.log(err);
     }
-
     res.sendStatus(HttpStatus.NoContent);
 })
