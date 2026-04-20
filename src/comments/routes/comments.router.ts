@@ -32,7 +32,5 @@ commentsRouter
         "/:id/like-status",
         AccessTokenGuard,
         idValidator,
-        commentInputValidation,
-        inputValidationResultMiddleware,
         commentsController.changeLikeStatus.bind(commentsController)
     )

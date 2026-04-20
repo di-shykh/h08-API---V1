@@ -14,5 +14,11 @@ export class LikesRepository {
     async deleteLike(id: string): Promise<DeleteResult> {
         return LikeModel.deleteOne({_id: id});
     }
-
+    async findLikeByUserIdAndParentId(userId: string, parentId: string): Promise<LikeDocument | null> {
+        const result = await LikeModel.findOne({
+            userId: userId,
+            parentId: parentId,
+        });
+        return result;
+    }
 }

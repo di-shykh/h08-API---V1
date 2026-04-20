@@ -2,28 +2,32 @@ import {CommentInputDto} from "./dtos/comment.input-dto";
 import {ResultStatus} from "../../core/result/result.code";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {CommentDB} from "../routes/output/commnent.db";
-import {DeleteResult, UpdateResult, WithId} from "mongodb";
+import {DeleteResult} from "mongodb";
 import {CommentOutput} from "../routes/output/comment-output";
-import {Post} from "../../posts/domain/post";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {CommentsRepository} from "../repositories/comments.repository";
 import {PostsRepository} from "../../posts/repositories/posts.repository";
-import { inject, injectable } from 'inversify';
+import {inject, injectable} from 'inversify';
 import {PostDocument} from "../../posts/domain/post.entity";
 import {CommentDocument} from "../domain/comment.entity";
 import {LikeStatus} from "../../likes/types/likeStatus";
+import {LikesRepository} from "../../likes/repositories/likes.repository";
+import {LikeModel} from "../../likes/domain/like.entity";
 
 @injectable()
 export class CommentsService {
     commentsRepository: CommentsRepository;
     postsRepository: PostsRepository;
+    likesRepository: LikesRepository;
 
     constructor(
         @inject(CommentsRepository) commentsRepository: CommentsRepository,
-        @inject(PostsRepository) postsRepository: PostsRepository
+        @inject(PostsRepository) postsRepository: PostsRepository,
+        @inject(LikesRepository) likesRepository: LikesRepository,
     ) {
         this.commentsRepository = commentsRepository;
         this.postsRepository = postsRepository;
+        this.likesRepository = likesRepository;
     }
 
     async createComment(postId: string, userId: string, dto: CommentInputDto): Promise<Result<CommentOutput|null>> {
@@ -100,8 +104,53 @@ export class CommentsService {
         if(!Object.values(LikeStatus).includes(likeStatus)) {
             return ResultObject.BadRequest('likeStatus', 'LikeStatus isn\'t valid!');
         }
-        if(likeStatus==='Like'){
+        const like = await this.likesRepository.findLikeByUserIdAndParentId(userId, commentId);
+        if (!like && likeStatus !== LikeStatus.none) {
+            const newLike = new LikeModel({
+                createdAt: new Date(),
+                status: likeStatus,
+                authorId: userId,
+                parentId: commentId,
+            });
+            await this.likesRepository.save(newLike);
 
+            if(likeStatus === LikeStatus.like) {
+                comment.likesCount++;
+            }
+            if(likeStatus===LikeStatus.dislike) {
+                comment.dislikesCount++;
+            }
+            await this.commentsRepository.save(comment);
+            return ResultObject.NoContent();
+        }
+        if(like) {
+            if(likeStatus === like.status){
+                return ResultObject.NoContent();
+            }
+            if(likeStatus === LikeStatus.like) {
+                like.status = likeStatus;
+                await this.likesRepository.save(like);
+                comment.likesCount++;
+                comment.dislikesCount--;
+                await this.commentsRepository.save(comment);
+            }
+            else if(likeStatus === LikeStatus.dislike) {
+                like.status = likeStatus;
+                await this.likesRepository.save(like);
+                comment.likesCount--;
+                comment.dislikesCount++;
+                await this.commentsRepository.save(comment);
+            }
+            else if(likeStatus === LikeStatus.none) {
+                if(like.status === LikeStatus.like) {
+                    comment.likesCount--;
+                }
+                else if (like.status === LikeStatus.dislike) {
+                   comment.dislikesCount--;
+                }
+                await this.likesRepository.deleteLike(like._id.toString());
+                await this.commentsRepository.save(comment);
+            }
         }
         return ResultObject.NoContent();
     }
