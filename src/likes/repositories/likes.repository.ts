@@ -16,7 +16,7 @@ export class LikesRepository {
     }
     async findLikeByUserIdAndParentId(userId: string, parentId: string): Promise<LikeDocument | null> {
         const result = await LikeModel.findOne({
-            userId: userId,
+            authorId: userId,
             parentId: parentId,
         });
         return result;

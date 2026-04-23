@@ -26,6 +26,7 @@ export class CommentsController {
     async getComment(req: Request, res: Response) {
         try{
             const id = req.params.id as string;
+            const userId = req.userId;
             const comment = await this.commentsQueryRepository.findCommentById(id);
             if (!comment) {
                 const result = ResultObject.NotFound('commentId', 'Comment with this Id is not exist');
@@ -34,7 +35,7 @@ export class CommentsController {
                 });
                 return;
             }
-            const commentOutput = await this.commentsQueryRepository.mapToCommentOutput(comment);
+            const commentOutput = await this.commentsQueryRepository.mapToCommentOutput(comment, userId);
             const result = ResultObject.Success(commentOutput);
             res.status(HttpStatus.Ok).json(result.data);
 
@@ -95,9 +96,20 @@ export class CommentsController {
     async changeLikeStatus(req: Request, res: Response) {
         try {
             const commentId: string = req.params.id as string;
-            const userId: string = req.userId as string;
-            const likeStatus: LikeStatus = req.body;
-
+            const userId: string | undefined = req.userId;
+            const likeStatus: LikeStatus = req.body.likeStatus;
+            if(!userId){
+               res.status(HttpStatus.Unauthorized).json({
+                   errorsMessages: [{ message: 'User not authorized', field: 'authorization' }]
+               });
+               return;
+            }
+            if (!likeStatus || !Object.values(LikeStatus).includes(likeStatus)) {
+                res.status(HttpStatus.BadRequest).json({
+                    errorsMessages: [{ message: 'Invalid likeStatus', field: 'likeStatus' }]
+                });
+                return;
+            }
             const result = await this.commentsService.changeLikeStatus(commentId, userId, likeStatus)
             if (result.status === ResultStatus.Forbidden) {
                 res.status(resultCodeToHttpException(ResultStatus.Forbidden)).json({

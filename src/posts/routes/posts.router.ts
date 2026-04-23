@@ -12,6 +12,7 @@ import {AccessTokenGuard} from "../../auth/middlewares/access.token.guard";
 import { commentInputValidation} from "../../comments/routes/comment.input-dto.validation-middleware";
 import {PostsController} from "./posts.controller";
 import {container} from "../../inversify-ioc";
+import {AccessTokenOptional} from "../../auth/middlewares/access.token.optional";
 
 const postsController = container.get(PostsController);
 export const postsRouter: Router = Router({});
@@ -61,6 +62,7 @@ postsRouter
     )
     .get(
         "/:id/comments",
+        AccessTokenOptional,
         idValidator,
         paginationAndSortingValidation(PostSortField),
         inputValidationResultMiddleware,

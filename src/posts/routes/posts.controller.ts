@@ -117,6 +117,7 @@ export class PostsController {
     async getCommentList(req: Request, res: Response) {
         try{
             const paramPostId = req.params.id as string;
+            const userId: string = req.userId as string;
 
             if (!paramPostId) {
                 return res.status(HttpStatus.BadRequest).json({
@@ -147,6 +148,7 @@ export class PostsController {
                 queryInput.pageNumber,
                 queryInput.pageSize,
                 totalCount,
+                userId
             )
             const result = ResultObject.Success(commentsListOutput);
             res.status(HttpStatus.Ok).json(result.data)

@@ -55,15 +55,18 @@ export class CommentsQueryRepository {
         const totalCount = await CommentModel.countDocuments(filter);
         return {items, totalCount};
     }
-    async mapToCommentOutput(comment: CommentDocument): Promise<CommentOutput> {
+    async mapToCommentOutput(comment: CommentDocument, userId?: string): Promise<CommentOutput> {
         const user: UserDocument | null = await UserModel.findOne({_id: comment.userId});
         if (!user) {
             throw new RepositoryNotFoundError("User not found.");
         }
-        const like = await LikeModel.findOne({
-            authorId: comment.userId,
-            parentId: comment._id.toString(),
-        });
+        let like = null;
+        if (userId) {
+            like = await LikeModel.findOne({
+                authorId: userId,
+                parentId: comment._id.toString(),
+            });
+        }
         const commentOutput: CommentOutput = {
             id: comment._id.toString(),
             content: comment.content,
@@ -84,7 +87,8 @@ export class CommentsQueryRepository {
         comments: CommentDocument[],
         pageNumber: number,
         pageSize: number,
-        totalCount: number
+        totalCount: number,
+        userId?: string
     ): Promise<CommentListPaginatedOutput> {
         if (comments.length === 0) {
             return {
@@ -104,16 +108,27 @@ export class CommentsQueryRepository {
         users.forEach(user => {
             userMap.set(user._id.toString(), user);
         });
+        let likeMap = new Map<string, LikeDocument>();
+        if (userId) {
+            const commentsIds = comments.map(comment => comment._id.toString());
+            const  likes = await LikeModel.find({
+                authorId: userId,
+                parentId: {$in: commentsIds},
+            });
+            if(likes && likes.length>0){
+                likeMap = new Map(
+                    likes.map(like => [like.parentId.toString(), like])
+                );
+            }
+        }
         const items: CommentOutput[] = await Promise.all(
             comments.map(async (comment: CommentDocument): Promise<CommentOutput> => {
                 const user: UserDB | undefined = userMap.get(comment.userId);
                 if (!user) {
                     throw new RepositoryNotFoundError(`User with id ${comment.userId} not found.`);
                 }
-                const like = await LikeModel.findOne({
-                    authorId: comment.userId,
-                    parentId: comment._id.toString(),
-                });
+                let like = likeMap.get(comment._id.toString());
+
                 return {
                     id: comment._id.toString(),
                     content: comment.content,

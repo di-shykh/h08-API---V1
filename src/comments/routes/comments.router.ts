@@ -5,12 +5,14 @@ import {commentInputValidation} from "./comment.input-dto.validation-middleware"
 import {inputValidationResultMiddleware} from "../../core/middlewares/validation/input-validation.result.middleware";
 import {CommentsController} from "./comments.controller";
 import {container} from "../../inversify-ioc";
+import {AccessTokenOptional} from "../../auth/middlewares/access.token.optional";
 
 const commentsController = container.get(CommentsController);
 export const commentsRouter: Router = Router({});
 commentsRouter
     .get(
         "/:id",
+        AccessTokenOptional,
         idValidator,
         commentsController.getComment.bind(commentsController)
     )
