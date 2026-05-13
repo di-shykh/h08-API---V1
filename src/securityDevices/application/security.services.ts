@@ -1,10 +1,9 @@
-import {Session} from "../domain/session";
-import {DeleteResult, UpdateResult, WithId} from "mongodb";
+import {DeleteResult} from "mongodb";
 import {Result, ResultObject} from "../../core/result/result.type";
 import {SessionRepository} from "../repositories/session.repository";
 import {JwtService} from "../../auth/application/jwt.service";
 import { inject, injectable } from 'inversify';
-import {SessionDocument} from "../domain/session.entity";
+import { SessionEntity} from "../domain/session.entity";
 
 @injectable()
 export class SecurityService {
@@ -19,11 +18,11 @@ export class SecurityService {
         this.sessionRepository = sessionRepository;
     }
 
-    async refreshToken(session: SessionDocument): Promise<Result<{
+    async refreshToken(session: SessionEntity): Promise<Result<{
         accessToken: string;
         refreshToken: string;
     } | null>> {
-        if (session.exp && new Date() > session.exp) {
+        if (session.isExpired()) {
             return ResultObject.Unauthorized();
         }
        const tokenResult = await this.jwtService.createToken(session.userId, session.deviceId);
@@ -38,7 +37,7 @@ export class SecurityService {
        if (!iat) {
            return ResultObject.Unauthorized();
        }
-       session.iat = iat;
+       session.updateIat(iat);
         try{
             await this.sessionRepository.save(session);
             return ResultObject.Success(tokenResult);
@@ -59,7 +58,7 @@ export class SecurityService {
         if (!session) {
             return ResultObject.NotFound("deviceId", "Session for this device does not exist");
         }
-        if(session.userId!==userId) {
+        if(!session.belongsToUser(userId)) {
             return ResultObject.Forbidden();
         }
         const result: DeleteResult = await this.sessionRepository.deleteSessionForDevice(session.deviceId);

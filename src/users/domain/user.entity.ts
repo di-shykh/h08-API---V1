@@ -2,11 +2,12 @@ import {UserDB} from '../routes/output/user.db';
 import * as mongoose from 'mongoose';
 import {Model, model, HydratedDocument} from "mongoose";
 import {UserCreateInput} from "../routes/input/create-user.input";
-import {v4 as uuidv4} from "uuid";
 import {addHours} from "date-fns";
+import {ResultObject} from "../../core/result/result.type";
 
 interface UserMethods {
-
+    confirmEmail(code: string): void;
+    updateEmailConfirmationData(code: string): void;
 };
 type UserStatics = typeof UserEntity;
 type UserModelType = Model<UserDB, {}, UserMethods> & UserStatics;
@@ -54,7 +55,7 @@ class UserEntity {
             createdAt: new Date().toISOString(),
         })
     }
-    static createUserWithConfirmationInfo(userInputDto: UserCreateInput, passwordHash: string) {
+    static createUserWithConfirmationInfo(userInputDto: UserCreateInput, passwordHash: string, confirmationCode: string) {
         if (!userInputDto.login||userInputDto.login.length < 3) {
             throw new Error('Login must be at least 3 characters');
         }
@@ -68,12 +69,43 @@ class UserEntity {
             createdAt: new Date().toISOString(),
             emailConfirmation: {
                 isConfirmed: false,
-                confirmationCode: uuidv4(),
+                confirmationCode: confirmationCode,
                 expirationDate: addHours(new Date(), 24).toISOString(),
             }
         })
     }
-
+    confirmEmail(confirmationCode: string) {
+        if(!confirmationCode||confirmationCode.length!==36){
+            throw new Error('Invalid confirmation code format');
+        }
+        if(!this.emailConfirmation){
+            return ResultObject.BadRequest('code', 'Code does not exist');
+        }
+        if(this.emailConfirmation.isConfirmed){
+            throw new Error('Registration is already confirmed');
+        }
+        const dateNow = new Date();
+        const expirationDate = new Date(this.emailConfirmation.expirationDate);
+        if(dateNow > expirationDate){
+            throw new Error( 'Code expired');
+        }
+        if(this.emailConfirmation.confirmationCode!==confirmationCode){
+            throw new Error('Invalid confirmation code');
+        }
+        this.emailConfirmation.isConfirmed = true;
+        this.emailConfirmation.confirmationCode = '';
+        this.emailConfirmation.expirationDate = '';
+    }
+    updateEmailConfirmationData(code: string): void {
+        if(!this.emailConfirmation){
+            throw new Error('Email confirmation does not exist');
+        }
+        if(this.emailConfirmation.isConfirmed){
+            throw new Error('Email is already confirmed');
+        }
+        this.emailConfirmation.confirmationCode = code;
+        this.emailConfirmation.expirationDate = addHours(new Date(), 24).toISOString();
+    }
 }
 
 userSchema.loadClass(UserEntity);

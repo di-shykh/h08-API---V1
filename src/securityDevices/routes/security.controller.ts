@@ -31,9 +31,6 @@ export class SecurityController {
            }
            const sessions = await this.sessionQueryRepository.getSessionsByUserId(userId);
            if(!sessions || sessions.length===0){
-               // return res.status(HttpStatus.Unauthorized).json({
-               //     errorsMessages: [{ message: 'No session found for user' }]
-               // })
                return res.status(HttpStatus.Ok).json([]);
            }
            const sessionsOutput = await this.sessionQueryRepository.mapToSessionOutput(sessions);

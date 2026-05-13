@@ -1,4 +1,3 @@
-import {UserDB} from "../routes/output/user.db";
 import {RepositoryNotFoundError} from "../../core/errors/repository-not-found.error";
 import {normalizeEmail} from "../../core/helpers/normolize-email";
 import { injectable } from 'inversify';
@@ -9,9 +8,9 @@ export class UsersRepository {
     async save(user: UserDocument): Promise<void>  {
         await user.save();
     }
-    async createUser(newUser: UserDB): Promise<string> {
-        const insertedUser = await UserModel.create(newUser);
-        return insertedUser._id.toString();
+    async saveAndReturnId(user: UserDocument): Promise<string>  {
+        await user.save();
+        return user._id.toString();
     }
     async deleteUser(id: string): Promise<void> {
         const deletedUser = await UserModel.deleteOne({_id: id});

@@ -12,7 +12,6 @@ import {clearDb} from "../../utils/clear-db";
 import {AUTH_PATH} from "../../../src/core/paths/paths";
 import {HttpStatus} from "../../../src/core/types/http-statuses";
 import { EmailAdapter } from "../../../src/auth/adapters/email.adapter";
-import {passwordRecoveryRepository} from "../../../src/composition.root";
 import express from "express";
 import request from "supertest";
 
@@ -105,6 +104,13 @@ describe("Check password recovery flow", () =>{
     });
     describe("/new-password", () =>{
         it("should send 204 If code is valid and new password is accepted", async () => {
+            let sentRecoveryCode: string = '';
+
+            emailAdapterSpy.mockImplementation((email: string, code: string) => {
+                sentRecoveryCode = code;
+                return Promise.resolve();
+            })
+
             const email = "testuser@mail.ru";
             const newUser = {
                 login: "testuser",loginOrEmail: email,
@@ -122,9 +128,11 @@ describe("Check password recovery flow", () =>{
                 .send({email})
                 .expect(HttpStatus.NoContent);
 
-            const recoveryCode = await passwordRecoveryRepository.findCodeByEmail(newUser.email);
+            const recoveryCode = sentRecoveryCode;
+            expect(recoveryCode).toBeDefined();
+
             const newPassword = "newPassword";
-            const response = await request(app)
+            await request(app)
                 .post(`${AUTH_PATH}/new-password`)
                 .send({
                     newPassword,
@@ -151,6 +159,12 @@ describe("Check password recovery flow", () =>{
             expect(loginResponse.body.accessToken).toBeDefined();
         })
         it("should return 400 for invalid recovery code", async () => {
+            let sentRecoveryCode: string = '';
+            emailAdapterSpy.mockImplementation((email: string, code: string) => {
+                sentRecoveryCode = code;
+                return Promise.resolve();
+            })
+
             const email = "testuser@mail.ru";
             const newUser = {
                 login: "testuser",loginOrEmail: email,
@@ -158,7 +172,7 @@ describe("Check password recovery flow", () =>{
                 email
             }
 
-            const userResp = await request(app)
+            await request(app)
                 .post(`${AUTH_PATH}/registration`)
                 .send(newUser)
                 .expect(HttpStatus.NoContent);
@@ -168,28 +182,49 @@ describe("Check password recovery flow", () =>{
                 .send({email})
                 .expect(HttpStatus.NoContent);
 
-            const invalidRecoveryCode = "invalidRecoveryCode";
             const newPassword = "newPassword";
             await request(app)
                 .post(`${AUTH_PATH}/new-password`)
                 .send({
                     newPassword,
-                    invalidRecoveryCode
+                    recoveryCode: 'totally-invalid-code'
                 })
                 .expect(HttpStatus.BadRequest);
-
-            const recoveryCode = await passwordRecoveryRepository.findCodeByEmail(newUser.email);
-            if(recoveryCode) await passwordRecoveryRepository.changeStatusRecoveryCode(recoveryCode);
 
             await request(app)
                 .post(`${AUTH_PATH}/new-password`)
                 .send({
                     newPassword,
-                    invalidRecoveryCode
+                    recoveryCode: '12345678-1234-1234-1234-123456789012'
+                })
+                .expect(HttpStatus.BadRequest);
+
+            const recoveryCode = sentRecoveryCode;
+            expect(recoveryCode).toBeDefined();
+
+            await request(app)
+                .post(`${AUTH_PATH}/new-password`)
+                .send({
+                    newPassword,
+                    recoveryCode
+                })
+                .expect(HttpStatus.NoContent);
+
+            await request(app)
+                .post(`${AUTH_PATH}/new-password`)
+                .send({
+                    newPassword,
+                    recoveryCode
                 })
                 .expect(HttpStatus.BadRequest);
         });
         it("should return 429 for more than 5 attempts from one IP-address during 10 seconds", async () => {
+            let sentRecoveryCode: string = '';
+            emailAdapterSpy.mockImplementation((email: string, code: string) => {
+                sentRecoveryCode = code;
+                return Promise.resolve();
+            })
+
             const email = "testuser@mail.ru";
             const maxAttempts = 5;
             const newPassword = "newPassword";
@@ -208,7 +243,10 @@ describe("Check password recovery flow", () =>{
                 .post(`${AUTH_PATH}/password-recovery`)
                 .send({email})
                 .expect(HttpStatus.NoContent);
-            const recoveryCode = await passwordRecoveryRepository.findCodeByEmail(newUser.email);
+
+            const recoveryCode = sentRecoveryCode;
+            expect(recoveryCode).toBeDefined();
+
             await request(app)
                 .post(`${AUTH_PATH}/new-password`)
                 .send({

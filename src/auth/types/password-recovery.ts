@@ -3,4 +3,5 @@ export type PasswordRecovery = {
     isUsed: boolean;
     passwordRecoveryCode: string;
     passwordRecoveryExpiration: Date;
+    createdAt: Date;
 }

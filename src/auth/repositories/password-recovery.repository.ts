@@ -1,54 +1,37 @@
-import {PasswordRecovery} from "../types/password-recovery";
 import { injectable } from 'inversify';
-import {PasswordRecoveryDocument, PasswordRecoveryModel } from "../domain/password-recovery.entity";
-import {UserModel} from "../../users/domain/user.entity"
+import {PasswordRecoveryModel } from "../domain/password-recovery.entity";
+import {UserModel} from "../../users/domain/user.entity";
+import { PasswordRecoveryEntity } from '../domain/password-recovery.entity';
 
 @injectable()
 export class PasswordRecoveryRepository {
-    async save(passwordRecovery: PasswordRecoveryDocument): Promise<void> {
-        await passwordRecovery.save();
-    }
-    async addPasswordRecoveryData(_id: string, passwordRecoveryData: PasswordRecovery): Promise<boolean> {
+    async save(recovery: PasswordRecoveryEntity): Promise<boolean> {
         try {
-            const passwordRecovery = new PasswordRecoveryModel(passwordRecoveryData);
-            await this.save(passwordRecovery);
-            const result = await PasswordRecoveryModel.updateOne(
-                {userId: _id.toString()},
-                {
-                    $set: {
-                        createdAt: new Date().toISOString()
-                    }
+            const result = await PasswordRecoveryModel.findOneAndUpdate(
+                {userId: recovery.userId},
+                {   userId: recovery.userId,
+                    passwordRecoveryCode: recovery.passwordRecoveryCode,
+                    passwordRecoveryExpiration: recovery.passwordRecoveryExpiration,
+                    isUsed: recovery.isUsed,
+                    createdAt: new Date().toISOString()
                 },
-                { upsert: true }
+                { upsert: true}
             );
-            return result.modifiedCount === 1 || result.upsertedCount === 1 || result.matchedCount === 1;
+            return true;
         } catch (error) {
             console.error("Error updating recovery code info:", error);
             return false;
         }
     }
-    async findCode(recoveryCode: string): Promise<PasswordRecoveryDocument|null> {
-        return PasswordRecoveryModel.findOne({passwordRecoveryCode: recoveryCode});
-    }
-    async changeStatusRecoveryCode(recoveryCode: string): Promise<void> {
-        try {
-            await PasswordRecoveryModel.updateOne(
-                {passwordRecoveryCode: recoveryCode},
-                {
-                    $set: {
-                        "isUsed": true,
-                    }
-                }
-            )
-        } catch (error) {
-            console.error("Error updating recovery code info:", error);
-            return;
-        }
-    }
-    async findCodeByEmail(email: string): Promise<string | null> {
-        const user = await UserModel.findOne({ email });
-        if (!user) return null;
-        const recovery = await PasswordRecoveryModel.findOne({ userId: user._id.toString() });
-        return recovery?.passwordRecoveryCode || null;
+    async findByCode(recoveryCode: string): Promise<PasswordRecoveryEntity|null> {
+        const result = await PasswordRecoveryModel.findOne({passwordRecoveryCode: recoveryCode});
+        if(!result) return null;
+        return PasswordRecoveryEntity.restore(
+            result.userId,
+            result.isUsed,
+            result.passwordRecoveryCode,
+            result.passwordRecoveryExpiration,
+            result.createdAt
+        );
     }
 }

@@ -27,7 +27,7 @@ export class AuthController {
         @inject(JwtService) jwtService: JwtService,
         @inject(SecurityService) securityService: SecurityService,
         @inject(SessionQueryRepository) sessionQueryRepository: SessionQueryRepository,
-        @inject(UsersRepository) usersQueryRepository: UsersQueryRepository
+        @inject(UsersQueryRepository) usersQueryRepository: UsersQueryRepository
     ) {
         this.authService = authService;
         this.jwtService = jwtService;
@@ -87,7 +87,7 @@ export class AuthController {
               return;
           }
           res.status(HttpStatus.NoContent).send();
-      } catch (e) {
+      } catch (e: unknown) {
           errorHandler(e,res);
       }
   }

@@ -30,13 +30,9 @@ export class UsersService {
         }
         const passwordHash: string = await this.bcryptService.generateHash(password);
 
-        const newUser = new UserModel();
-        newUser.login = login;
-        newUser.email = email;
-        newUser.passwordHash = passwordHash;
-        newUser.createdAt = new Date().toISOString();
+        const newUser = UserModel.createUser(userInputDto, passwordHash);
 
-        const newUserId = await this.usersRepository.createUser(newUser);
+        const newUserId = await this.usersRepository.saveAndReturnId(newUser);
         return newUserId;
     }
     async deleteUser(id: string): Promise<void> {
