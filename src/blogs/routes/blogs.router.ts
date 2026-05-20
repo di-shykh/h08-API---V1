@@ -10,6 +10,7 @@ import {postCreateForBlogInputValidation} from "../../posts/routes/post.input-dt
 import {blogExistingIdValidationMiddleware} from "./blog.existing-id-validation-middleware";
 import {container} from "../../inversify-ioc";
 import {BlogsController} from "./blogs.controller";
+import {AccessTokenOptional} from "../../auth/middlewares/access.token.optional";
 
 const blogsController = container.get(BlogsController);
 export const blogsRouter: Router = Router({});
@@ -52,6 +53,7 @@ blogsRouter
     )
     .get(
         "/:id/posts",
+        AccessTokenOptional,
         idValidator,
         blogExistingIdValidationMiddleware,
         paginationAndSortingValidation(PostSortField),

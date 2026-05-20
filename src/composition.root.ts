@@ -25,6 +25,7 @@ import {PostsRepository} from "./posts/repositories/posts.repository";
 import {PostsService} from "./posts/application/post.services";
 import {PasswordRecoveryRepository} from "./auth/repositories/password-recovery.repository";
 import {LikesRepository} from "./likes/repositories/likes.repository";
+import {ExtendedLikesRepository} from "./likes/repositories/extendedLikes.repository";
 
 export const bcryptService = new BcryptService();
 export const emailAdapter = new EmailAdapter();
@@ -41,6 +42,7 @@ export const postsQueryRepository = new PostsQueryRepository();
 export const postsRepository = new PostsRepository();
 export const passwordRecoveryRepository = new PasswordRecoveryRepository();
 export const likesRepository = new LikesRepository();
+export const extendedLikesRepository = new ExtendedLikesRepository();
 export const authService = new AuthService(bcryptService,jwtService,emailAdapter,sessionRepository,usersRepository,passwordRecoveryRepository);
 
 export const securityService = new SecurityService(jwtService, sessionRepository);
@@ -49,7 +51,7 @@ export const authController = new AuthController(authService,jwtService, securit
 export const securityController = new SecurityController(sessionQueryRepository,securityService);
 export const usersService = new UsersService(bcryptService, usersRepository);
 export const userController = new UserController(usersQueryRepository, usersService);
-export const postsService = new PostsService(postsRepository,blogsRepository);
+export const postsService = new PostsService(postsRepository,blogsRepository,extendedLikesRepository,usersRepository);
 
 export const commentsService = new CommentsService(commentsRepository,postsRepository, likesRepository);
 export const blogsService = new BlogsService(blogsRepository, postsRepository);

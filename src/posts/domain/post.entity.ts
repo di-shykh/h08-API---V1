@@ -12,5 +12,17 @@ const postSchema = new mongoose.Schema<Post>({
     blogId: { type: String, required: true, minLength: 1 },
     blogName: { type: String, required: true, minLength: 1 },
     createdAt: { type: String, required: true },
+    extendedLikesInfo: {
+        likesCount: {type: Number, required: true},
+        dislikesCount: {type: Number, required: true},
+        newestLikes: {type: [{
+            addedAt: { type: String, required: true },
+            userId: { type: String, required: true },
+            login: { type: String, required: true },
+            }],
+            required: true,
+            default: [],
+        },
+    }
 });
 export const PostModel: PostModelType = model<Post, PostModelType>('post', postSchema);

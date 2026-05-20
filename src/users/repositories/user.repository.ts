@@ -53,4 +53,12 @@ export class UsersRepository {
         );
         return result.modifiedCount === 1;
     }
+    async findUsersLoginByIds(ids: string[]): Promise<Map<string, string>| null> {
+        const users = await UserModel.find({_id: {$in: ids}}).lean();
+        const loginMap = new Map<string, string>();
+        users.forEach(user => {
+            loginMap.set(user._id.toString(), user.login);
+        })
+        return loginMap;
+    }
 }

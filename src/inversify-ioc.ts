@@ -28,6 +28,7 @@ import {PostsRepository} from "./posts/repositories/posts.repository";
 import {PostsService} from "./posts/application/post.services";
 import {PasswordRecoveryRepository} from "./auth/repositories/password-recovery.repository";
 import {LikesRepository} from "./likes/repositories/likes.repository";
+import {ExtendedLikesRepository} from "./likes/repositories/extendedLikes.repository";
 
 export const container: Container = new Container();
 
@@ -60,3 +61,4 @@ container.bind(PostsRepository).to(PostsRepository);
 container.bind(CommentsRepository).to(CommentsRepository);
 container.bind(PasswordRecoveryRepository).to(PasswordRecoveryRepository);
 container.bind(LikesRepository).to(LikesRepository);
+container.bind(ExtendedLikesRepository).to(ExtendedLikesRepository);

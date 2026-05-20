@@ -1,12 +1,5 @@
 import mongoose from 'mongoose';
 import { SETTINGS } from '../core/settings/settings';
-import {BlogModel} from "../blogs/domain/blog.entity";
-import {PostModel} from "../posts/domain/post.entity";
-import {CommentModel} from "../comments/domain/comment.entity";
-import {UserModel} from "../users/domain/user.entity";
-import {SessionModel} from "../securityDevices/domain/session.entity";
-import {RateLimitModel} from "../auth/domain/rate-limit.entity";
-import {PasswordRecoveryModel} from "../auth/domain/password-recovery.entity";
 
 // Подключения к бд
 export async function runDB(url?: string): Promise<void> {

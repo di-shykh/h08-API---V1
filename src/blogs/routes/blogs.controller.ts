@@ -98,11 +98,13 @@ export class BlogsController {
                 locations: ['query'],
                 includeOptionals: true,
             });
+            const userId = req.userId;
             const { items, totalCount } = await this.postsQueryRepository.findPostsByBlogId(blogId, sanitizedQuery);
-            const postListOutput = this.postsQueryRepository.mapToPostListPaginatedOutput(items,
+            const postListOutput = await this.postsQueryRepository.mapToPostListPaginatedOutput(items,
                 sanitizedQuery.pageNumber,
                 sanitizedQuery.pageSize,
                 totalCount,
+                userId,
             );
             res.status(HttpStatus.Ok).send(postListOutput);
         }
@@ -121,7 +123,7 @@ export class BlogsController {
                 content: postData.content,
                 blogId});
             const createdPost = await this.postsQueryRepository.findPostByIdOrFail(createdPostId);
-            const postOutput = this.postsQueryRepository.mapToPostOutput(createdPost);
+            const postOutput = await this.postsQueryRepository.mapToPostOutput(createdPost);
             res.status(HttpStatus.Created).send(postOutput);
         }
         catch (e: unknown) {

@@ -17,6 +17,7 @@ import {CommentsService} from "../../comments/application/comment.services";
 import {CommentsQueryRepository} from "../../comments/repositories/comments.query-repository";
 import { inject, injectable } from 'inversify';
 import {PostDocument} from "../domain/post.entity";
+import {LikeStatus} from "../../likes/types/likeStatus";
 
 @injectable()
 export class PostsController {
@@ -40,16 +41,18 @@ export class PostsController {
     async getPostList(req: Request, res: Response) {
         try{
             const query = req.query as unknown as PostQueryInput;
+            const userId = req.userId;
             const sanitizedQuery = matchedData<PostQueryInput>(req, {
                 locations: ['query'],
                 includeOptionals: true,
             });
             const queryInput = setDefaultSortAndPaginationIfNotExist(sanitizedQuery);
             const {items, totalCount} = await this.postsQueryRepository.findManyPosts(queryInput);
-            const postsListOutput = this.postsQueryRepository.mapToPostListPaginatedOutput(items,
+            const postsListOutput = await this.postsQueryRepository.mapToPostListPaginatedOutput(items,
                 queryInput.pageNumber,
                 queryInput.pageSize,
                 totalCount,
+                userId
             )
             res.status(HttpStatus.Ok).send(postsListOutput);
         }catch (e: unknown) {
@@ -59,8 +62,9 @@ export class PostsController {
     async getPost(req: Request, res: Response) {
         try{
             const id = req.params.id as string;
+            const userId = req.userId;
             const post = await this.postsQueryRepository.findPostByIdOrFail(id);
-            const postOutput = this.postsQueryRepository.mapToPostOutput(post);
+            const postOutput = await this.postsQueryRepository.mapToPostOutput(post, userId);
             res.status(HttpStatus.Ok).send(postOutput);
         } catch (e: unknown ) {
             errorHandler(e, res);
@@ -70,7 +74,7 @@ export class PostsController {
         try{
             const createdPost = await this.postsService.createPost(req.body);
             const insertedPost = await this.postsQueryRepository.findPostByIdOrFail(createdPost);
-            const postOutput = this.postsQueryRepository.mapToPostOutput(insertedPost);
+            const postOutput = await this.postsQueryRepository.mapToPostOutput(insertedPost, req.userId);
             res.status(HttpStatus.Created).send(postOutput);
         } catch (e: unknown) {
             errorHandler(e, res);
@@ -155,5 +159,35 @@ export class PostsController {
         } catch (e) {
             errorHandler(e, res);
         }
+    }
+    async changeExtendedLikeStatus(req: Request, res: Response) {
+       try {
+           const postId: string = req.params.id as string;
+           const userId: string | undefined = req.userId;
+           const likeStatus: LikeStatus =  req.body.likeStatus;
+
+           if(!userId){
+               res.status(HttpStatus.Unauthorized).json({
+                   errorsMessages: [{ message: "User not authorized", field: "authorization" }]
+               })
+               return;
+           }
+           if(!likeStatus || !Object.values(LikeStatus).includes(likeStatus)){
+               res.status(HttpStatus.BadRequest).json({
+                   errorsMessages: [{ message: "Invalid likeStatus", field: "likeStatus" }]
+               })
+               return;
+           }
+           const result = await this.postsService.changeExtendedLikeStatus(postId, userId, likeStatus);
+           if(result.status !== ResultStatus.NoContent){
+               res.status(resultCodeToHttpException(result.status)).json({
+                   errorsMessages: result.extensions
+               })
+               return;
+           }
+           return res.sendStatus(HttpStatus.NoContent);
+       } catch (e) {
+           errorHandler(e, res);
+       }
     }
 }

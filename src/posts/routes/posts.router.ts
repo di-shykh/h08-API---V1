@@ -20,12 +20,14 @@ export const postsRouter: Router = Router({});
 postsRouter
     .get(
         "",
+        AccessTokenOptional,
         paginationAndSortingValidation(PostSortField),
         inputValidationResultMiddleware,
         postsController.getPostList.bind(postsController)
     )
     .get(
         "/:id",
+        AccessTokenOptional,
         idValidator,
         inputValidationResultMiddleware,
         postsController.getPost.bind(postsController)
@@ -67,4 +69,10 @@ postsRouter
         paginationAndSortingValidation(PostSortField),
         inputValidationResultMiddleware,
         postsController.getCommentList.bind(postsController)
+    )
+    .put(
+        "/:id/like-status",
+        AccessTokenGuard,
+        idValidator,
+        postsController.changeExtendedLikeStatus.bind(postsController)
     )
